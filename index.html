@@ -116,7 +116,7 @@ const T = {
   sending:{es:"Enviando…",en:"Sending…"},
   privacy:{es:"Tus respuestas solo las ve Zeuq Web Studio y se usan para preparar tu propuesta.",en:"Only Zeuq Web Studio sees your answers, and they're used only to prepare your proposal."},
   thanksT:{es:"¡Gracias!",en:"Thank you!"},
-  thanksP:{es:"Recibimos tus respuestas. Te escribimos en los próximos días con tu propuesta.",en:"We got your answers. We'll reach out in the next few days with your proposal."},
+  thanksP:{es:"Recibimos tus respuestas. Te enviaremos tu propuesta en un máximo de 2 días hábiles. Revisa tu correo: te llegará una confirmación.",en:"We got your answers. We'll send your proposal within 2 business days. Check your email for a confirmation."},
   errReq:{es:"Faltan datos obligatorios. Revisa los campos marcados.",en:"Some required fields are missing. Check the highlighted fields."},
   errSend:{es:"No se pudo enviar. Revisa tu conexión e inténtalo otra vez, o escríbenos por WhatsApp.",en:"Couldn't send. Check your connection and try again, or message us on WhatsApp."},
   errCfg:{es:"El formulario aún no está conectado. Avísale a Zeuq Web Studio.",en:"This form isn't connected yet. Please let Zeuq Web Studio know."},
@@ -304,7 +304,7 @@ $("form").addEventListener("submit",async e=>{
     _subject:`Nuevo proyecto web: ${A.negocio||A.nombre}`,
     email:A.email, idioma_formulario:lang
   }, readable(), {
-    codigo_cotizador: JSON.stringify(Object.assign({v:1,fecha:new Date().toISOString().slice(0,10)},A))
+    codigo_cotizador: JSON.stringify(Object.assign({v:1,fecha:new Date().toISOString().slice(0,10),lang},A))
   });
   payload._gotcha=document.querySelector('[name="_gotcha"]').value;
   try{
