@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zeuq Web Studio</title>
+<meta name="description" content="Cuéntanos sobre tu proyecto web / Tell us about your web project">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<script>
+/* ============ CONFIGURACIÓN ============
+   Pega aquí tu endpoint de Formspree (formspree.io → New form → copia la URL "https://formspree.io/f/xxxxxx") */
+window.ZEUQ_FORM_ENDPOINT = "https://formspree.io/f/mkjjeplz";
+</script>
+<style>
+:root{
+  --bg:#F3F4F1; --surface:#FFFFFF; --ink:#18211D; --muted:#5B6660; --line:#D9DED8;
+  --accent:#1F4FD1; --accent-soft:#E4EAFB; --on-accent:#FFFFFF; --err:#B3261E;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111513; --surface:#191E1B; --ink:#E7ECE8; --muted:#9BA6A0; --line:#2B332E;
+  --accent:#86A2FF; --accent-soft:#1D2640; --on-accent:#0D1430; --err:#FF8A80; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(48px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:760px;margin:0 auto}
+[hidden]{display:none!important}
+header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:28px}
+.brand{font-family:var(--display);font-weight:700;font-size:1.25rem;letter-spacing:.12em;text-transform:uppercase}
+.brand b{color:var(--accent)}
+.lang{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;background:var(--surface)}
+.lang button{border:0;background:none;padding:6px 14px;font:inherit;font-weight:700;font-size:.85rem;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(2.2rem,7vw,3.4rem);line-height:.98;margin:0 0 10px;text-transform:uppercase;text-wrap:balance}
+.lede{color:var(--muted);font-size:1.08rem;max-width:58ch;margin:0 0 8px}
+.meta{font-size:.9rem;color:var(--muted);margin:0 0 32px}
+section.block{margin-bottom:32px}
+section.block>h2{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:1.45rem;margin:0 0 6px;display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+section.block>h2 span{font-family:var(--body);font-size:.78rem;color:var(--muted);font-weight:700;letter-spacing:.08em}
+fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:16px 0 18px;min-width:0}
+legend{float:left;width:100%;padding:0;font-weight:700;font-size:1.03rem;text-wrap:balance}
+.req{color:var(--accent)}
+.help{clear:both;color:var(--muted);font-size:.92rem;margin:2px 0 6px}
+.opts{clear:both;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;padding-top:8px}
+.opt{position:relative;display:block;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;min-width:0}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.fields{clear:both;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:8px}
+.fields .full{grid-column:1/-1}
+@media (max-width:560px){.fields{grid-template-columns:1fr}}
+.fl label{display:block;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+input[type=text],input[type=email],input[type=tel],input[type=url],input[type=number],textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+textarea{min-height:96px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stepper{clear:both;display:flex;align-items:center;gap:8px;padding-top:8px}
+.stepper input{width:84px;text-align:center}
+button{font:inherit}
+.btn{font-weight:700;cursor:pointer;border-radius:8px;padding:10px 16px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);padding:14px 22px;font-size:1.05rem}
+.submit{display:flex;flex-direction:column;gap:10px;align-items:flex-start;border-top:2px solid var(--ink);padding-top:20px}
+.error{color:var(--err);font-weight:600}
+.small{font-size:.88rem;color:var(--muted)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.thanks{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:28px}
+.thanks h2{font-family:var(--display);text-transform:uppercase;font-size:2rem;margin:0 0 8px}
+footer{margin-top:40px;font-size:.85rem;color:var(--muted)}
+.invalid{border-color:var(--err)!important}
+@media (prefers-reduced-motion:no-preference){.opt{transition:border-color .15s,background .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Zeuq <b>Web</b> Studio</div>
+    <div class="lang" role="group" aria-label="Idioma / Language">
+      <button type="button" data-lang="es" aria-pressed="true">ES</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <h1 data-i="title"></h1>
+    <p class="lede" data-i="lede"></p>
+    <p class="meta" data-i="meta"></p>
+    <form id="form" novalidate>
+      <div id="questions"></div>
+      <div class="hp" aria-hidden="true"><label>Website<input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label></div>
+      <div class="submit">
+        <button type="submit" class="btn primary" id="send" data-i="send"></button>
+        <p class="error" id="err" role="alert" hidden></p>
+        <p class="small" data-i="privacy"></p>
+      </div>
+    </form>
+  </main>
+
+  <div class="thanks" id="thanks" hidden>
+    <h2 data-i="thanksT"></h2>
+    <p data-i="thanksP"></p>
+  </div>
+
+  <footer>© <span id="yr"></span> Zeuq Web Studio</footer>
+</div>
+
+<script>
+const T = {
+  title:{es:"Cuéntanos sobre tu página web",en:"Tell us about your website"},
+  lede:{es:"Responde estas preguntas para entender lo que necesitas. Con tus respuestas te preparamos una propuesta a la medida.",en:"Answer these questions so we understand what you need. We'll use your answers to prepare a custom proposal."},
+  meta:{es:"Toma unos 5 a 8 minutos. Si no sabes algo, elige la opción que más se acerque.",en:"Takes about 5 to 8 minutes. If you're not sure, pick the closest option."},
+  send:{es:"Enviar respuestas",en:"Send answers"},
+  sending:{es:"Enviando…",en:"Sending…"},
+  privacy:{es:"Tus respuestas solo las ve Zeuq Web Studio y se usan para preparar tu propuesta.",en:"Only Zeuq Web Studio sees your answers, and they're used only to prepare your proposal."},
+  thanksT:{es:"¡Gracias!",en:"Thank you!"},
+  thanksP:{es:"Recibimos tus respuestas. Te escribimos en los próximos días con tu propuesta.",en:"We got your answers. We'll reach out in the next few days with your proposal."},
+  errReq:{es:"Faltan datos obligatorios. Revisa los campos marcados.",en:"Some required fields are missing. Check the highlighted fields."},
+  errSend:{es:"No se pudo enviar. Revisa tu conexión e inténtalo otra vez, o escríbenos por WhatsApp.",en:"Couldn't send. Check your connection and try again, or message us on WhatsApp."},
+  errCfg:{es:"El formulario aún no está conectado. Avísale a Zeuq Web Studio.",en:"This form isn't connected yet. Please let Zeuq Web Studio know."},
+  of:{es:"de",en:"of"}
+};
+const L=(es,en)=>({es,en});
+const SECTIONS = [
+ {t:L("Sobre ti y tu negocio","About you and your business"), items:[
+  {id:"contacto",type:"fields",label:L("Datos de contacto","Contact details"),fields:[
+    {id:"nombre",kind:"text",label:L("Tu nombre","Your name"),req:true},
+    {id:"negocio",kind:"text",label:L("Nombre del negocio","Business name")},
+    {id:"email",kind:"email",label:L("Correo","Email"),req:true},
+    {id:"whatsapp",kind:"tel",label:L("WhatsApp / teléfono","WhatsApp / phone")},
+    {id:"rubro",kind:"text",label:L("¿A qué se dedica tu negocio?","What does your business do?"),full:true,req:true}]},
+  {id:"sitio_actual",type:"radio",label:L("¿Ya tienes página web?","Do you already have a website?"),opts:[
+    {v:"no",t:L("No","No")},{v:"si",t:L("Sí, pero quiero una nueva","Yes, but I want a new one")}]},
+  {id:"objetivo",type:"check",label:L("¿Qué quieres lograr con la página?","What do you want the website to do?"),help:L("Puedes elegir varias.","Pick as many as apply."),opts:[
+    {v:"info",t:L("Mostrar quién soy y qué ofrezco","Show who I am and what I offer")},
+    {v:"clientes",t:L("Conseguir clientes nuevos","Get new clients")},
+    {v:"agendar",t:L("Que me agenden citas","Let people book appointments")},
+    {v:"vender",t:L("Vender productos o servicios","Sell products or services")},
+    {v:"contenido",t:L("Compartir contenido o consejos","Share content or tips")}]}
+ ]},
+ {t:L("Diseño y páginas","Design and pages"), items:[
+  {id:"diseno",type:"radio",label:L("¿Qué tan personalizado quieres el diseño?","How custom do you want the design?"),help:L("Todas las opciones se ven bien en celular.","Every option looks good on phones."),opts:[
+    {v:"plantilla",t:L("Sencillo y profesional, con mis colores","Simple and professional, in my colors")},
+    {v:"semi",t:L("Con detalles propios de mi marca","With details unique to my brand")},
+    {v:"medida",t:L("Totalmente único, hecho desde cero","Completely unique, built from scratch")}]},
+  {id:"paginas",type:"check",label:L("Además de Inicio, Sobre mí, Servicios y Contacto, ¿qué más necesitas?","Besides Home, About, Services and Contact, what else do you need?"),opts:[
+    {v:"testimonios",t:L("Testimonios o reseñas","Testimonials or reviews")},
+    {v:"portafolio",t:L("Portafolio o trabajos realizados","Portfolio or past work")},
+    {v:"galeria",t:L("Galería de fotos","Photo gallery")},
+    {v:"faq",t:L("Preguntas frecuentes","FAQ")},
+    {v:"precios",t:L("Precios y paquetes","Pricing and packages")},
+    {v:"equipo",t:L("Equipo","Team")}]}
+ ]},
+ {t:L("Funciones","Features"), items:[
+  {id:"reservas",type:"radio",label:L("¿Necesitas que la gente agende citas en la página?","Do you need people to book appointments on the site?"),opts:[
+    {v:"no",t:L("No","No")},
+    {v:"agendar",t:L("Sí, solo agendar","Yes, just booking")},
+    {v:"cobrar",t:L("Sí, y que paguen al reservar","Yes, and pay when booking")},
+    {v:"paquetes",t:L("Sí, y vender paquetes de citas","Yes, and sell appointment packages")}]},
+  {id:"modalidad",type:"radio",show:s=>s.reservas&&s.reservas!=="no",label:L("¿Las citas son presenciales o en línea?","Are appointments in person or online?"),opts:[
+    {v:"presencial",t:L("Presenciales","In person")},{v:"online",t:L("En línea","Online")},{v:"ambas",t:L("Ambas","Both")}]},
+  {id:"tienda",type:"radio",label:L("¿Quieres vender productos?","Do you want to sell products?"),opts:[
+    {v:"no",t:L("No","No")},
+    {v:"pocos",t:L("Sí, pocos productos (hasta 10)","Yes, a few products (up to 10)")},
+    {v:"completa",t:L("Sí, una tienda completa","Yes, a full online store")},
+    {v:"digitales",t:L("Productos digitales (PDF, guías, cursos)","Digital products (PDFs, guides, courses)")}]},
+  {id:"membresia",type:"radio",label:L("¿Quieres contenido exclusivo para suscriptores que pagan?","Do you want exclusive content for paying members?"),opts:[
+    {v:"no",t:L("No","No")},{v:"si",t:L("Sí","Yes")},{v:"nose",t:L("Tal vez más adelante","Maybe later")}]},
+  {id:"formulario",type:"radio",label:L("¿Necesitas un formulario especial?","Do you need a special form?"),help:L("Por ejemplo: solicitud de cotización, evaluación inicial o inscripción.","For example: quote request, intake questionnaire or sign-up.")
+    ,opts:[{v:"no",t:L("No, solo contacto","No, just contact")},{v:"si",t:L("Sí","Yes")}]},
+  {id:"extras",type:"check",label:L("¿Qué más te interesa?","What else interests you?"),opts:[
+    {v:"newsletter",t:L("Que la gente se suscriba a mi correo","Email newsletter sign-up")},
+    {v:"instagram",t:L("Mostrar mi Instagram en la página","Show my Instagram on the site")},
+    {v:"seo",t:L("Aparecer en Google","Show up on Google")},
+    {v:"google",t:L("Perfil de Google Maps / Business","Google Maps / Business profile")},
+    {v:"calculadora",t:L("Calculadora o herramienta interactiva","Calculator or interactive tool")}]}
+ ]},
+ {t:L("Contenido","Content"), items:[
+  {id:"blog",type:"radio",label:L("¿Quieres un blog o sección de artículos?","Do you want a blog or articles section?"),opts:[
+    {v:"no",t:L("No","No")},{v:"simple",t:L("Sí, sencillo","Yes, simple")},{v:"completo",t:L("Sí, con categorías y buscador","Yes, with categories and search")}]},
+  {id:"autor",type:"radio",show:s=>s.blog&&s.blog!=="no",label:L("¿Quién escribiría los artículos?","Who would write the articles?"),opts:[
+    {v:"el",t:L("Yo los escribo","I'll write them")},{v:"yo",t:L("Quiero que los redacten por mí","I want them written for me")}]},
+  {id:"articulos",type:"number",show:s=>s.blog&&s.blog!=="no",label:L("¿Cuántos artículos te gustaría tener al lanzar?","How many articles at launch?"),min:0,max:30},
+  {id:"videos",type:"radio",label:L("¿Vas a tener videos?","Will you have videos?"),opts:[
+    {v:"no",t:L("No","No")},{v:"insertados",t:L("Algunos, de YouTube o Instagram","A few, from YouTube or Instagram")},{v:"biblioteca",t:L("Una biblioteca de videos organizada","An organized video library")}]}
+ ]},
+ {t:L("Marca y materiales","Brand and materials"), items:[
+  {id:"logo",type:"radio",label:L("¿Tienes logo?","Do you have a logo?"),opts:[{v:"si",t:L("Sí","Yes")},{v:"no",t:L("No, necesito uno","No, I need one")}]},
+  {id:"fotos",type:"radio",label:L("¿Tienes fotos profesionales?","Do you have professional photos?"),opts:[
+    {v:"si",t:L("Sí","Yes")},{v:"banco",t:L("No, usen fotos de banco","No, use stock photos")},{v:"sesion",t:L("Voy a hacer una sesión de fotos","I'll do a photo shoot")}]},
+  {id:"textos",type:"radio",label:L("¿Quién escribe los textos de la página?","Who writes the website copy?"),opts:[
+    {v:"el",t:L("Yo los mando","I'll send them")},{v:"yo",t:L("Quiero que los redacten por mí","I want them written for me")}]},
+  {id:"dominio",type:"radio",label:L("¿Tienes dominio (ej. tunegocio.com)?","Do you have a domain (e.g. yourbusiness.com)?"),opts:[
+    {v:"si",t:L("Sí","Yes")},{v:"no",t:L("No","No")},{v:"nose",t:L("No sé qué es","Not sure what that is")}]}
+ ]},
+ {t:L("Idioma, plazo y presupuesto","Language, timeline and budget"), items:[
+  {id:"idioma",type:"radio",label:L("¿En qué idioma va la página?","What language should the site be in?"),opts:[
+    {v:"en",t:L("Inglés","English")},{v:"es",t:L("Español","Spanish")},{v:"bi",t:L("Inglés y español","English and Spanish")}]},
+  {id:"plazo",type:"radio",label:L("¿Para cuándo la necesitas?","When do you need it?"),opts:[
+    {v:"normal",t:L("En 1 o 2 meses","In 1 or 2 months")},{v:"urgente",t:L("Lo antes posible (menos de 2 semanas)","ASAP (under 2 weeks)")},{v:"flexible",t:L("Sin prisa","No rush")}]},
+  {id:"presupuesto",type:"radio",label:L("¿Cuánto tenías pensado invertir en la página?","How much were you planning to invest in the website?"),help:L("Es solo una referencia para proponerte opciones que te sirvan.","Just a reference so we can suggest options that work for you."),opts:[
+    {v:"<1000",t:L("Menos de $1,000","Under $1,000")},{v:"1000-2500",t:L("$1,000 a $2,500","$1,000 to $2,500")},{v:"2500-5000",t:L("$2,500 a $5,000","$2,500 to $5,000")},{v:">5000",t:L("Más de $5,000","Over $5,000")},{v:"nose",t:L("No estoy seguro","Not sure")}]},
+  {id:"referencias",type:"textarea",label:L("Páginas que te gusten (links)","Websites you like (links)"),help:L("Pueden ser de tu competencia o de cualquier rubro.","They can be competitors or from any industry.")}
+ ]},
+ {t:L("Después del lanzamiento","After launch"), items:[
+  {id:"horas",type:"radio",label:L("¿Cada cuánto crees que vas a pedir cambios?","How often do you expect to request changes?"),help:L("Por ejemplo: cambiar precios, horarios, fotos o promociones.","For example: updating prices, hours, photos or promotions."),opts:[
+    {v:"1",t:L("Pocas veces al mes","A few times a month")},{v:"3",t:L("Cada semana","Every week")},{v:"5",t:L("Varias veces por semana","Several times a week")}]},
+  {id:"artmes",type:"radio",show:s=>s.blog&&s.blog!=="no",label:L("¿Cuántos artículos nuevos al mes?","How many new articles per month?"),opts:[
+    {v:"0",t:L("Ninguno","None")},{v:"2",t:L("Unos 2","About 2")},{v:"4",t:L("Unos 4","About 4")}]},
+  {id:"reporte",type:"radio",label:L("¿Te gustaría un reporte mensual de visitas?","Would you like a monthly traffic report?"),opts:[{v:"no",t:L("No","No")},{v:"si",t:L("Sí","Yes")}]},
+  {id:"comentarios",type:"textarea",label:L("¿Algo más que debamos saber?","Anything else we should know?")}
+ ]}
+];
+
+let lang="es";
+try{ const q=new URLSearchParams(location.search).get("lang"); if(q==="en"||q==="es") lang=q; else if((navigator.language||"").startsWith("en")) lang="en" }catch(e){}
+const A={}; // answers
+SECTIONS.flatMap(s=>s.items).forEach(q=>{ if(q.type==="check") A[q.id]=[]; });
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i]").forEach(el=>el.textContent=T[el.dataset.i][lang]);
+  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lang===lang));
+  const root=$("questions"); root.innerHTML="";
+  SECTIONS.forEach((sec,i)=>{
+    const s=document.createElement("section"); s.className="block";
+    s.innerHTML=`<h2>${sec.t[lang]} <span>${i+1} ${T.of[lang]} ${SECTIONS.length}</span></h2>`;
+    sec.items.forEach(q=>{
+      const f=document.createElement("fieldset"); f.dataset.q=q.id;
+      let h=`<legend>${q.label[lang]}</legend>`+(q.help?`<p class="help">${q.help[lang]}</p>`:"");
+      if(q.type==="radio"||q.type==="check"){
+        const t=q.type==="radio"?"radio":"checkbox";
+        h+=`<div class="opts">`+q.opts.map(o=>`<label class="opt"><input type="${t}" id="${q.id}-${o.v}" name="${q.id}" value="${o.v}"> ${o.t[lang]}</label>`).join("")+`</div>`;
+      } else if(q.type==="fields"){
+        h+=`<div class="fields">`+q.fields.map(x=>`<div class="fl${x.full?" full":""}"><label for="${x.id}">${x.label[lang]}${x.req?' <span class="req">*</span>':""}</label><input type="${x.kind}" id="${x.id}" name="${x.id}" ${x.req?"required":""} autocomplete="${x.kind==="email"?"email":x.id==="nombre"?"name":x.kind==="tel"?"tel":"off"}"></div>`).join("")+`</div>`;
+      } else if(q.type==="number"){
+        h+=`<div class="stepper"><button type="button" class="btn" data-step="-1" aria-label="−">−</button><input type="number" id="${q.id}" name="${q.id}" min="${q.min}" max="${q.max}" inputmode="numeric"><button type="button" class="btn" data-step="1" aria-label="+">+</button></div>`;
+      } else if(q.type==="textarea"){
+        h+=`<textarea id="${q.id}" name="${q.id}" style="clear:both;margin-top:8px"></textarea>`;
+      }
+      f.innerHTML=h; s.appendChild(f);
+    });
+    root.appendChild(s);
+  });
+  restore(); visibility();
+}
+function restore(){
+  SECTIONS.flatMap(s=>s.items).forEach(q=>{
+    if(q.type==="radio") q.opts.forEach(o=>$(q.id+"-"+o.v).checked=A[q.id]===o.v);
+    else if(q.type==="check") q.opts.forEach(o=>$(q.id+"-"+o.v).checked=A[q.id].includes(o.v));
+    else if(q.type==="fields") q.fields.forEach(x=>$(x.id).value=A[x.id]||"");
+    else if(q.type==="number") $(q.id).value=A[q.id]??0;
+    else if(q.type==="textarea") $(q.id).value=A[q.id]||"";
+  });
+}
+function visibility(){
+  SECTIONS.flatMap(s=>s.items).forEach(q=>{ if(q.show) document.querySelector(`fieldset[data-q="${q.id}"]`).hidden=!q.show(A) });
+}
+
+document.addEventListener("change",e=>{
+  const t=e.target; if(!t.name||t.name==="_gotcha") return;
+  if(t.type==="radio") A[t.name]=t.value;
+  else if(t.type==="checkbox"){ const a=new Set(A[t.name]); t.checked?a.add(t.value):a.delete(t.value); A[t.name]=[...a] }
+  visibility();
+});
+document.addEventListener("input",e=>{
+  const t=e.target; if(!t.name||t.name==="_gotcha"||t.type==="radio"||t.type==="checkbox") return;
+  A[t.name]= t.type==="number" ? Math.max(0,Math.min(30,+t.value||0)) : t.value;
+  t.classList.remove("invalid");
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-step]"); if(b){ A.articulos=Math.max(0,Math.min(30,(+A.articulos||0)+(+b.dataset.step))); $("articulos").value=A.articulos; return }
+  const lb=e.target.closest("[data-lang]"); if(lb){ lang=lb.dataset.lang; render() }
+});
+
+// readable summary for the email
+function readable(){
+  const out={};
+  SECTIONS.forEach(sec=>sec.items.forEach(q=>{
+    if(q.show&&!q.show(A)) return;
+    if(q.type==="fields") q.fields.forEach(x=>{ if(A[x.id]) out[x.label.es]=A[x.id] });
+    else if(q.type==="radio"){ const o=q.opts.find(o=>o.v===A[q.id]); if(o) out[q.label.es]=o.t.es }
+    else if(q.type==="check"){ if(A[q.id].length) out[q.label.es]=q.opts.filter(o=>A[q.id].includes(o.v)).map(o=>o.t.es).join(", ") }
+    else if(A[q.id]!==undefined&&A[q.id]!=="") out[q.label.es]=A[q.id];
+  }));
+  return out;
+}
+
+$("form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const err=$("err"); err.hidden=true;
+  const missing=["nombre","email","rubro"].filter(id=>!(A[id]||"").trim()||(id==="email"&&!/^\S+@\S+\.\S+$/.test(A[id])));
+  missing.forEach(id=>$(id).classList.add("invalid"));
+  if(missing.length){ err.textContent=T.errReq[lang]; err.hidden=false; $(missing[0]).focus(); return }
+  const ep=window.ZEUQ_FORM_ENDPOINT||"";
+  if(!/^https:\/\/formspree\.io\/f\/[A-Za-z0-9]+$/.test(ep)){ err.textContent=T.errCfg[lang]; err.hidden=false; return }
+  const btn=$("send"); btn.disabled=true; btn.textContent=T.sending[lang];
+  const payload=Object.assign({
+    _subject:`Nuevo proyecto web: ${A.negocio||A.nombre}`,
+    email:A.email, idioma_formulario:lang
+  }, readable(), {
+    codigo_cotizador: JSON.stringify(Object.assign({v:1,fecha:new Date().toISOString().slice(0,10)},A))
+  });
+  payload._gotcha=document.querySelector('[name="_gotcha"]').value;
+  try{
+    const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)});
+    if(!r.ok) throw new Error(r.status);
+    $("main").hidden=true; $("thanks").hidden=false; window.scrollTo(0,0);
+  }catch(x){
+    err.textContent=T.errSend[lang]; err.hidden=false; btn.disabled=false; btn.textContent=T.send[lang];
+  }
+});
+$("yr").textContent=new Date().getFullYear();
+render();
+</script>
+</body>
+</html>
