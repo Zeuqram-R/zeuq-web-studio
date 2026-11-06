@@ -506,6 +506,7 @@ struct ProposalSheet: View {
     let onProcessed: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var lang: String
+    @State private var pdfURL: URL?
 
     init(item: FormItem, q: Quote, ajustes: Ajustes, whatsappNumber: String?, onCopy: @escaping (String) -> Void, onProcessed: (() -> Void)?) {
         self.item = item; self.q = q; self.ajustes = ajustes; self.whatsappNumber = whatsappNumber
@@ -541,6 +542,14 @@ struct ProposalSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     VStack(spacing: 10) {
+                        if let pdf = pdfURL {
+                            ShareLink(item: pdf) {
+                                Label(lang == "en" ? "Compartir PDF (inglés)" : "Compartir PDF", systemImage: "doc.richtext.fill").frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent).controlSize(.large)
+                        } else {
+                            ProgressView("Preparando PDF…").frame(maxWidth: .infinity)
+                        }
                         if let w = whatsapp {
                             Link(destination: w) {
                                 Label("Mandar por WhatsApp", systemImage: "message.fill").frame(maxWidth: .infinity)
@@ -564,6 +573,7 @@ struct ProposalSheet: View {
             .background(Color.pageBackground)
             .navigationTitle("Propuesta")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Listo") { dismiss() } } }
+            .task(id: lang) { pdfURL = nil; pdfURL = ProposalPDF.make(content) }
         }
         #if os(macOS)
         .frame(minWidth: 520, minHeight: 600)

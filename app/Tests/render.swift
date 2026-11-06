@@ -31,6 +31,21 @@ struct Render {
             shot(CotizacionTab(item: item, q: .constant(q), r: r), "cotizacion-\(suffix).png", dark, store)
         }
         shot(List { FormRow(item: item); FormRow(item: item) }.frame(height: 220), "lista-light.png", false, store)
+        for lang in ["es", "en"] {
+            let c = Proposal.content(item, q, store.ajustes, lang: lang)
+            let r = ImageRenderer(content: ProposalDocument(c: c))
+            r.scale = 1.5
+            if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+               let png = rep.representation(using: .png, properties: [:]) {
+                try? png.write(to: URL(fileURLWithPath: "capturas/pdf-\(lang).png"))
+                print("captura pdf-\(lang).png \(Int(img.size.width))x\(Int(img.size.height))")
+            }
+            if let u = ProposalPDF.make(c) {
+                try? FileManager.default.removeItem(atPath: "capturas/propuesta-\(lang).pdf")
+                try? FileManager.default.copyItem(atPath: u.path, toPath: "capturas/propuesta-\(lang).pdf")
+                print("pdf listo \(lang)")
+            }
+        }
     }
 
     @MainActor static func shot<V: View>(_ v: V, _ name: String, _ dark: Bool, _ store: Store) {
