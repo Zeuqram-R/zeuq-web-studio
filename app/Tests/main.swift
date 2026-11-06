@@ -34,6 +34,16 @@ let en = Proposal.text(Proposal.content(fi, qp, Ajustes(), lang: "en"))
 let es = Proposal.text(Proposal.content(fi, qp, Ajustes(), lang: "es"))
 print("----- EN -----\n" + en + "\n----- ES -----\n" + es)
 if !en.contains("Online booking with payment") || !en.contains("Your special price") || !es.contains("Reservas con pago en línea") { print("❌ propuesta bilingüe"); fails += 1 } else { print("✅ propuesta bilingüe") }
+// Seguimiento: meses, mensualidades y horas
+if Mes.next("2026-12") != "2027-01" || Mes.prev("2027-01") != "2026-12" || Mes.range("2026-11", "2027-02").count != 4 { print("❌ meses"); fails += 1 } else { print("✅ meses") }
+var fs = fi
+fs.estado = "entregada"
+fs.pagos = Pagos(adelanto: nil, saldo: nil, inicioMantenimiento: "2026-01", mensualidades: [:])
+fs.horasLog = [RegistroHoras(fecha: "2026-11-03T10:00:00Z", horas: 2.5, nota: ""), RegistroHoras(fecha: "2026-10-03T10:00:00Z", horas: 4, nota: "")]
+if !fs.mensualidadPendiente("2026-11") || fs.horasUsadas("2026-11") != 2.5 { print("❌ pagos y horas"); fails += 1 } else { print("✅ pagos y horas") }
+let enc = try JSONEncoder().encode(fs)
+let back = try JSONDecoder().decode(FormItem.self, from: enc)
+if back != fs { print("❌ guardar y leer seguimiento"); fails += 1 } else { print("✅ guardar y leer seguimiento") }
 // La cotización guardada sin algunos campos se debe poder leer
 let partial = try JSONDecoder().decode(Quote.self, from: Data(#"{"mercado":"cr","descuento":10}"#.utf8))
 if partial.mercado != "cr" || partial.descuento != 10 || partial.diseno != "plantilla" { print("❌ lectura parcial"); fails += 1 } else { print("✅ lectura parcial") }

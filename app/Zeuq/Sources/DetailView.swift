@@ -8,8 +8,15 @@ import AppKit
 enum DetailTab: String, CaseIterable, Identifiable {
     case cliente = "Cliente"
     case cotizacion = "Cotización"
+    case seguimiento = "Seguimiento"
     var id: String { rawValue }
-    var icon: String { self == .cliente ? "person.text.rectangle" : "dollarsign.circle" }
+    var icon: String {
+        switch self {
+        case .cliente: return "person.text.rectangle"
+        case .cotizacion: return "dollarsign.circle"
+        case .seguimiento: return "flag.checkered"
+        }
+    }
 }
 
 struct DetailView: View {
@@ -20,14 +27,17 @@ struct DetailView: View {
     @State private var saving = false
     @State private var toast: String?
     @State private var showProposal = false
+    @State private var track: Track
 
     init(item: FormItem) {
         self.item = item
         _q = State(initialValue: item.quote)
+        _track = State(initialValue: Track(item))
+        _tab = State(initialValue: ["aceptada", "construccion", "entregada"].contains(item.estado) ? .seguimiento : .cliente)
     }
 
     private var r: PriceResult { Pricing.compute(q, store.ajustes) }
-    private var dirty: Bool { q != item.quote || item.cotizacion == nil }
+    private var dirty: Bool { q != item.quote || item.cotizacion == nil || track != Track(item) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,6 +54,10 @@ struct DetailView: View {
                     switch tab {
                     case .cliente: ClienteTab(item: item)
                     case .cotizacion: CotizacionTab(item: item, q: $q, r: r)
+                    case .seguimiento:
+                        SeguimientoTab(item: item, r: r, track: $track,
+                                       onEstado: { e in Task { await changeEstado(e) } },
+                                       onPersist: { Task { await save(quiet: true) } })
                     }
                 }
                 .padding(.horizontal)
@@ -78,7 +92,7 @@ struct DetailView: View {
         .sheet(isPresented: $showProposal) {
             ProposalSheet(item: item, q: q, ajustes: store.ajustes, whatsappNumber: whatsappNumber,
                           onCopy: { copy($0) },
-                          onProcessed: item.estado == "procesado" ? nil : { Task { await save(estado: "procesado") } })
+                          onSent: ["nuevo", "procesado"].contains(item.estado) ? { Task { await changeEstado("enviada") } } : nil)
         }
         .overlay(alignment: .top) {
             if let t = toast {
@@ -126,13 +140,13 @@ struct DetailView: View {
                     Label("Enviar confirmación ahora", systemImage: "envelope")
                 }
             }
-            if item.estado != "procesado" {
-                Button { Task { await save(estado: "procesado") } } label: { Label("Marcar como procesado", systemImage: "checkmark.circle") }
+            if item.estado == "nuevo" {
+                Button { Task { await changeEstado("procesado") } } label: { Label("Marcar como cotizado", systemImage: "checkmark.circle") }
             }
-            if item.estado == "archivado" {
-                Button { Task { await store.setEstado(item, "nuevo") } } label: { Label("Restaurar", systemImage: "arrow.uturn.backward") }
+            if item.estado == "archivado" || item.estado == "rechazada" {
+                Button { Task { await changeEstado("procesado") } } label: { Label("Reabrir", systemImage: "arrow.uturn.backward") }
             } else {
-                Button(role: .destructive) { Task { await store.setEstado(item, "archivado") } } label: { Label("Archivar", systemImage: "archivebox") }
+                Button(role: .destructive) { Task { await changeEstado("archivado") } } label: { Label("Archivar", systemImage: "archivebox") }
             }
             Divider()
             Button(role: .destructive) { q = Quote.from(item.data) } label: {
@@ -151,14 +165,26 @@ struct DetailView: View {
         return digits.count == 8 ? "506" + digits : digits
     }
 
-    private func save(estado: String? = nil) async {
-        saving = true
+    /// El formulario con la cotización y el seguimiento que tienes en pantalla
+    private var current: FormItem {
         var it = item
         it.cotizacion = q
-        if let estado { it.estado = estado }
-        let ok = await store.save(it, note: estado == "procesado" ? "Formulario procesado" : "Cotización guardada")
+        track.apply(to: &it)
+        return it
+    }
+
+    private func save(quiet: Bool = false) async {
+        saving = true
+        let ok = await store.save(current, note: "Cotización y seguimiento guardados")
         saving = false
-        show(ok ? (estado == "procesado" ? "Procesado" : "Guardado") : (store.message ?? "No se pudo guardar"))
+        if !quiet || !ok { show(ok ? "Guardado" : (store.message ?? "No se pudo guardar")) }
+    }
+
+    private func changeEstado(_ e: String) async {
+        saving = true
+        let ok = await store.setEstado(current, e)
+        saving = false
+        show(ok ? Etapa.nombre(e) : (store.message ?? "No se pudo guardar"))
     }
 
     private func copy(_ text: String) {
@@ -503,14 +529,14 @@ struct ProposalSheet: View {
     let ajustes: Ajustes
     let whatsappNumber: String?
     let onCopy: (String) -> Void
-    let onProcessed: (() -> Void)?
+    let onSent: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var lang: String
     @State private var pdfURL: URL?
 
-    init(item: FormItem, q: Quote, ajustes: Ajustes, whatsappNumber: String?, onCopy: @escaping (String) -> Void, onProcessed: (() -> Void)?) {
+    init(item: FormItem, q: Quote, ajustes: Ajustes, whatsappNumber: String?, onCopy: @escaping (String) -> Void, onSent: (() -> Void)?) {
         self.item = item; self.q = q; self.ajustes = ajustes; self.whatsappNumber = whatsappNumber
-        self.onCopy = onCopy; self.onProcessed = onProcessed
+        self.onCopy = onCopy; self.onSent = onSent
         _lang = State(initialValue: item.lang == "en" ? "en" : "es")
     }
 
@@ -560,9 +586,9 @@ struct ProposalSheet: View {
                             .buttonStyle(.bordered).controlSize(.large)
                         ShareLink(item: text) { Label("Compartir texto", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
                             .buttonStyle(.bordered).controlSize(.large)
-                        if let onProcessed {
-                            Button { onProcessed(); dismiss() } label: {
-                                Label("Marcar como procesado", systemImage: "checkmark.circle").frame(maxWidth: .infinity)
+                        if let onSent {
+                            Button { onSent(); dismiss() } label: {
+                                Label("Ya se la mandé: pasar a «Propuesta enviada»", systemImage: "paperplane").frame(maxWidth: .infinity)
                             }
                             .controlSize(.large)
                         }
