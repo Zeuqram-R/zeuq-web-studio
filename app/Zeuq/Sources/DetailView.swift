@@ -28,7 +28,6 @@ struct DetailView: View {
 
     private var r: PriceResult { Pricing.compute(q, store.ajustes) }
     private var dirty: Bool { q != item.quote || item.cotizacion == nil }
-    private var proposal: String { Pricing.proposal(item, q, store.ajustes) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -77,7 +76,8 @@ struct DetailView: View {
             #endif
         }
         .sheet(isPresented: $showProposal) {
-            ProposalSheet(text: proposal, whatsapp: whatsappURL(withText: true), onCopy: { copy(proposal) },
+            ProposalSheet(item: item, q: q, ajustes: store.ajustes, whatsappNumber: whatsappNumber,
+                          onCopy: { copy($0) },
                           onProcessed: item.estado == "procesado" ? nil : { Task { await save(estado: "procesado") } })
         }
         .overlay(alignment: .top) {
@@ -145,13 +145,10 @@ struct DetailView: View {
 
     // MARK: Acciones
 
-    private func whatsappURL(withText: Bool) -> URL? {
+    private var whatsappNumber: String? {
         let digits = item.whatsapp.filter(\.isNumber)
         guard digits.count >= 8 else { return nil }
-        let number = digits.count == 8 ? "506" + digits : digits
-        guard withText else { return URL(string: "https://wa.me/\(number)") }
-        let text = proposal.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return URL(string: "https://wa.me/\(number)?text=\(text)")
+        return digits.count == 8 ? "506" + digits : digits
     }
 
     private func save(estado: String? = nil) async {
@@ -501,16 +498,42 @@ struct BulletLabel: LabelStyle {
 // MARK: - Hoja de propuesta
 
 struct ProposalSheet: View {
-    let text: String
-    let whatsapp: URL?
-    let onCopy: () -> Void
+    let item: FormItem
+    let q: Quote
+    let ajustes: Ajustes
+    let whatsappNumber: String?
+    let onCopy: (String) -> Void
     let onProcessed: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
+    @State private var lang: String
+
+    init(item: FormItem, q: Quote, ajustes: Ajustes, whatsappNumber: String?, onCopy: @escaping (String) -> Void, onProcessed: (() -> Void)?) {
+        self.item = item; self.q = q; self.ajustes = ajustes; self.whatsappNumber = whatsappNumber
+        self.onCopy = onCopy; self.onProcessed = onProcessed
+        _lang = State(initialValue: item.lang == "en" ? "en" : "es")
+    }
+
+    private var content: ProposalContent { Proposal.content(item, q, ajustes, lang: lang) }
+    private var text: String { Proposal.text(content) }
+    private var whatsapp: URL? {
+        guard let n = whatsappNumber else { return nil }
+        let t = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return URL(string: "https://wa.me/\(n)?text=\(t)")
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Picker("Idioma", selection: $lang) {
+                            Text("Español").tag("es")
+                            Text("English").tag("en")
+                        }
+                        .pickerStyle(.segmented)
+                        Text(item.lang == "en" ? "El cliente llenó el formulario en inglés." : "El cliente llenó el formulario en español.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                     Text(text)
                         .font(.callout)
                         .textSelection(.enabled)
@@ -524,9 +547,9 @@ struct ProposalSheet: View {
                             }
                             .buttonStyle(.borderedProminent).tint(.green).controlSize(.large)
                         }
-                        Button { onCopy() } label: { Label("Copiar", systemImage: "doc.on.doc").frame(maxWidth: .infinity) }
+                        Button { onCopy(text) } label: { Label("Copiar texto", systemImage: "doc.on.doc").frame(maxWidth: .infinity) }
                             .buttonStyle(.bordered).controlSize(.large)
-                        ShareLink(item: text) { Label("Compartir", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
+                        ShareLink(item: text) { Label("Compartir texto", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
                             .buttonStyle(.bordered).controlSize(.large)
                         if let onProcessed {
                             Button { onProcessed(); dismiss() } label: {

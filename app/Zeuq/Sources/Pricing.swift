@@ -282,36 +282,4 @@ enum Pricing {
         if q.membresia == "nose" { out.append("Membresía queda como posible fase 2.") }
         return out
     }
-
-    /// Propuesta lista para pegar en WhatsApp.
-    static func proposal(_ item: FormItem, _ q: Quote, _ aj: Ajustes) -> String {
-        let r = compute(q, aj)
-        var l: [String] = []
-        l.append("*Propuesta Zeuq Web Studio" + (item.nombre.isEmpty ? "" : " para \(item.nombre)") + "*")
-        if !item.negocio.isEmpty { l.append(item.negocio) }
-        l.append("")
-        l.append("*Tu página incluye:*")
-        for x in r.lines {
-            let t = x.text.replacingOccurrences(of: #" \(\$[\d,]+ c/u\)"#, with: "", options: .regularExpression)
-            l.append("• " + t)
-        }
-        if q.idioma == "bi" { l.append("• Versión en inglés y español") }
-        if q.plazo == "urgente" { l.append("• Entrega urgente") }
-        l.append("")
-        if q.descuento > 0 {
-            l.append("Precio regular: \(money(r.list))")
-            l.append("*Precio especial para ti: \(money(r.special))*")
-        } else {
-            l.append("*Precio de la página: \(money(r.special))*")
-        }
-        if r.iva > 0 { l.append("Total con IVA (13%): \(money(r.specialIva))") }
-        l.append("Adelanto para empezar: \(money(r.deposit))")
-        l.append("")
-        l.append(q.descMo > 0 ? "*Mantenimiento mensual: \(money(r.specialMonthly))* (regular \(money(r.monthly)))" : "*Mantenimiento mensual: \(money(r.specialMonthly))*")
-        for m in r.monthlyLines { l.append("• " + m.text) }
-        l.append("")
-        if r.iva > 0 { l.append("_El mantenimiento mensual se cobra más IVA (13%)._") }
-        for t in terms(q, aj) { l.append("_" + t + "_") }
-        return l.joined(separator: "\n")
-    }
 }

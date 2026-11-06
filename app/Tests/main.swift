@@ -26,6 +26,14 @@ qo.overrides = ["base": 700]
 qo.custom = [CustomLine(text: "Migración", amount: 200), CustomLine(text: "Correo", amount: 10, monthly: true)]
 let ro = Pricing.compute(qo, Ajustes())
 if ro.list != 900 || ro.monthly != 85 || ro.lines.first?.original != 900 { print("❌ precios a mano: \(ro.list) \(ro.monthly)"); fails += 1 } else { print("✅ precios a mano") }
+// Propuesta en los dos idiomas
+let fi = FormItem(id: "2026-11-05_abc123def0", fecha: "2026-11-05T00:00:00Z", lang: "en", estado: "nuevo", confirmado: nil,
+                  data: ["nombre": .string("Juan Ramos"), "negocio": .string("JR Fitness")], cotizacion: nil)
+var qp = Quote(); qp.reservas = "cobrar"; qp.paginas = ["testimonios"]; qp.idioma = "bi"; qp.descuento = 10
+let en = Proposal.text(Proposal.content(fi, qp, Ajustes(), lang: "en"))
+let es = Proposal.text(Proposal.content(fi, qp, Ajustes(), lang: "es"))
+print("----- EN -----\n" + en + "\n----- ES -----\n" + es)
+if !en.contains("Online booking with payment") || !en.contains("Your special price") || !es.contains("Reservas con pago en línea") { print("❌ propuesta bilingüe"); fails += 1 } else { print("✅ propuesta bilingüe") }
 // La cotización guardada sin algunos campos se debe poder leer
 let partial = try JSONDecoder().decode(Quote.self, from: Data(#"{"mercado":"cr","descuento":10}"#.utf8))
 if partial.mercado != "cr" || partial.descuento != 10 || partial.diseno != "plantilla" { print("❌ lectura parcial"); fails += 1 } else { print("✅ lectura parcial") }
