@@ -115,7 +115,7 @@ enum Proposal {
         return out
     }
 
-    static func content(_ item: FormItem, _ q: Quote, _ aj: Ajustes, lang: String, date: Date = Date()) -> ProposalContent {
+    static func content(_ item: FormItem, _ q: Quote, _ aj: Ajustes, lang: String, date: Date = Date(), enColones: Bool = false) -> ProposalContent {
         let r = Pricing.compute(q, aj)
         let first = item.nombre.split(separator: " ").first.map(String.init) ?? ""
         let loc = Locale(identifier: lang == "en" ? "en_US" : "es_CR")
@@ -135,9 +135,15 @@ enum Proposal {
         }
         if r.iva > 0 { rows.append(.init(label: t(lang, "Total con IVA (13%)", "Total with 13% VAT"), value: money(r.specialIva), bold: true)) }
         rows.append(.init(label: t(lang, "Adelanto para empezar (50%)", "Deposit to start (50%)"), value: money(r.deposit)))
+        let tc = aj.tipoCambio
+        if enColones {
+            rows.append(.init(label: t(lang, "En colones (tipo de cambio ₡\(Int(tc)))", "In colones (₡\(Int(tc)) per $1)"),
+                              value: "≈ " + colones(r.specialIva, tc)))
+        }
 
         let monthly = money(r.specialMonthly) + t(lang, "/mes", "/month")
             + (q.descMo > 0 ? t(lang, " (regular \(money(r.monthly)))", " (regular \(money(r.monthly)))") : "")
+            + (enColones ? " ≈ " + colones(r.specialMonthly, tc) : "")
 
         let num = "ZWS-" + item.id.suffix(6).uppercased()
 

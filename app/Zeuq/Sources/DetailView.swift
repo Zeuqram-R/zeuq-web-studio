@@ -116,10 +116,16 @@ struct DetailView: View {
                     Text(money(r.iva > 0 ? r.specialIva : r.special)).font(.title2.weight(.bold)).monospacedDigit()
                     if q.descuento > 0 { Text(money(r.list)).font(.caption).strikethrough().foregroundStyle(.secondary) }
                 }
+                if q.mercado == "cr" {
+                    Text("≈ " + colones(r.iva > 0 ? r.specialIva : r.special, store.ajustes.tipoCambio)).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                }
             }
             VStack(alignment: .leading, spacing: 0) {
                 Text(r.iva > 0 ? "Mensual · IVA incl." : "Mensual").font(.caption).foregroundStyle(.secondary)
                 Text(money(r.iva > 0 ? r.specialMonthlyIva : r.specialMonthly)).font(.title3.weight(.semibold)).monospacedDigit()
+                if q.mercado == "cr" {
+                    Text("≈ " + colones(r.iva > 0 ? r.specialMonthlyIva : r.specialMonthly, store.ajustes.tipoCambio)).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                }
             }
             Spacer()
             Button { showProposal = true } label: {
@@ -378,6 +384,9 @@ struct CotizacionTab: View {
                 VStack(alignment: .leading) {
                     Text("Precio de lista").font(.caption).foregroundStyle(.secondary)
                     Text(money(r.list)).font(.title.weight(.bold)).monospacedDigit()
+                    if q.mercado == "cr" {
+                        Text("≈ " + colones(r.list, store.ajustes.tipoCambio)).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    }
                 }
                 Spacer()
                 VStack(alignment: .trailing) {
@@ -498,6 +507,10 @@ struct CotizacionTab: View {
                 }
                 totalRow("Adelanto 50%", money(r.deposit), muted: true)
                 totalRow("Primer año", money(r.firstYear), muted: true)
+                if q.mercado == "cr" {
+                    totalRow("En colones (₡\(Int(store.ajustes.tipoCambio)) por $1)",
+                             "≈ \(colones(r.specialIva, store.ajustes.tipoCambio)) · \(colones(r.specialMonthlyIva, store.ajustes.tipoCambio))/mes", muted: true)
+                }
             }
             .font(.callout)
         }
@@ -540,7 +553,8 @@ struct ProposalSheet: View {
         _lang = State(initialValue: item.lang == "en" ? "en" : "es")
     }
 
-    private var content: ProposalContent { Proposal.content(item, q, ajustes, lang: lang) }
+    @State private var enColones = false
+    private var content: ProposalContent { Proposal.content(item, q, ajustes, lang: lang, enColones: enColones && q.mercado == "cr") }
     private var text: String { Proposal.text(content) }
     private var whatsapp: URL? {
         guard let n = whatsappNumber else { return nil }
@@ -560,6 +574,10 @@ struct ProposalSheet: View {
                         .pickerStyle(.segmented)
                         Text(item.lang == "en" ? "El cliente llenó el formulario en inglés." : "El cliente llenó el formulario en español.")
                             .font(.caption).foregroundStyle(.secondary)
+                        if q.mercado == "cr" {
+                            Toggle("Mostrar también en colones (₡\(Int(ajustes.tipoCambio)) por $1)", isOn: $enColones)
+                                .font(.callout)
+                        }
                     }
                     Text(text)
                         .font(.callout)
@@ -599,7 +617,8 @@ struct ProposalSheet: View {
             .background(Color.pageBackground)
             .navigationTitle("Propuesta")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Listo") { dismiss() } } }
-            .task(id: lang) { pdfURL = nil; pdfURL = ProposalPDF.make(content) }
+            .task(id: "\(lang)\(enColones)") { pdfURL = nil; pdfURL = ProposalPDF.make(content) }
+            .onAppear { enColones = q.mercado == "cr" }
         }
         #if os(macOS)
         .frame(minWidth: 520, minHeight: 600)

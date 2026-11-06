@@ -59,6 +59,20 @@ struct SettingsView: View {
                 rates("Florida / EE. UU.", $aj.fl)
                 rates("Costa Rica", $aj.cr)
                 Section {
+                    LabeledContent("Colones por $1") {
+                        TextField("460", value: $aj.tipoCambio, format: .number)
+                            .multilineTextAlignment(.trailing)
+                            #if os(iOS)
+                            .keyboardType(.decimalPad)
+                            #endif
+                            .frame(maxWidth: 120)
+                    }
+                } header: {
+                    Text("Tipo de cambio")
+                } footer: {
+                    Text("Para mostrar precios en colones a clientes de Costa Rica. Actualízalo con el tipo de cambio de venta del día.")
+                }
+                Section {
                     NavigationLink { PreciosView(aj: $aj) } label: {
                         Label("Precios de cada opción", systemImage: "tag")
                     }

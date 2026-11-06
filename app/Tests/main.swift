@@ -53,6 +53,11 @@ let rx = Pricing.compute(qx, ajx)
 if rx.lines.first(where: { $0.key == "diseno" })?.amount != 500 || rx.list != 1800 { print("❌ precios de Ajustes: \(rx.list)"); fails += 1 } else { print("✅ precios de Ajustes") }
 let ajOld = try JSONDecoder().decode(Ajustes.self, from: Data(#"{"fl":{"base":1000,"mensual":80,"hora":45},"cr":{"base":450,"mensual":35,"hora":20},"piso":20}"#.utf8))
 if ajOld.fl.base != 1000 || ajOld.piso != 20 || !ajOld.precios.isEmpty { print("❌ ajustes viejos"); fails += 1 } else { print("✅ ajustes viejos") }
+// Colones
+if colones(1000, 460) != "₡460.000" { print("❌ colones: \(colones(1000, 460))"); fails += 1 } else { print("✅ colones") }
+var qc = Quote(); qc.mercado = "cr"
+let cc = Proposal.text(Proposal.content(fi, qc, Ajustes(), lang: "es", enColones: true))
+if !cc.contains("En colones") { print("❌ propuesta en colones"); fails += 1 } else { print("✅ propuesta en colones") }
 // La cotización guardada sin algunos campos se debe poder leer
 let partial = try JSONDecoder().decode(Quote.self, from: Data(#"{"mercado":"cr","descuento":10}"#.utf8))
 if partial.mercado != "cr" || partial.descuento != 10 || partial.diseno != "plantilla" { print("❌ lectura parcial"); fails += 1 } else { print("✅ lectura parcial") }

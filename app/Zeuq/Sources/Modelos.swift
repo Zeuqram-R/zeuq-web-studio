@@ -179,6 +179,8 @@ struct Ajustes: Codable, Equatable {
     var piso = 25
     /// Precios que cambiaste para cada opción, por mercado: precios["fl"]["diseno.semi"] = 400
     var precios: [String: [String: Double]] = [:]
+    /// Colones por cada dólar, para mostrar precios en ₡ a clientes de Costa Rica
+    var tipoCambio: Double = 460
 
     init() {}
 
@@ -190,6 +192,7 @@ struct Ajustes: Codable, Equatable {
         cr = (try? c.decodeIfPresent(MarketRates.self, forKey: .cr)) ?? nil ?? d.cr
         piso = (try? c.decodeIfPresent(Int.self, forKey: .piso)) ?? nil ?? d.piso
         precios = (try? c.decodeIfPresent([String: [String: Double]].self, forKey: .precios)) ?? nil ?? [:]
+        tipoCambio = (try? c.decodeIfPresent(Double.self, forKey: .tipoCambio)) ?? nil ?? d.tipoCambio
     }
 
     func rates(_ mercado: String) -> MarketRates { mercado == "cr" ? cr : fl }
@@ -208,6 +211,17 @@ enum Textos {
         "info": "Mostrar quién es", "clientes": "Conseguir clientes", "agendar": "Agendar citas",
         "vender": "Vender", "contenido": "Compartir contenido",
     ]
+}
+
+/// Monto en colones a partir de dólares, redondeado a ₡100: "₡1.587.500"
+func colones(_ usd: Double, _ tipo: Double) -> String {
+    let f = NumberFormatter()
+    f.numberStyle = .decimal
+    f.locale = Locale(identifier: "es_CR")
+    f.groupingSeparator = "."
+    f.maximumFractionDigits = 0
+    let v = (usd * tipo / 100).rounded() * 100
+    return "₡" + (f.string(from: NSNumber(value: v)) ?? String(Int(v)))
 }
 
 func money(_ n: Double) -> String {

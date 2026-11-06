@@ -36,7 +36,7 @@ struct LockView: View {
 
     var body: some View {
         ZStack {
-            Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
+            Color.pageBackground.ignoresSafeArea()
             VStack(spacing: 18) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 34, weight: .semibold))
