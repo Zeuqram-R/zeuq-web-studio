@@ -82,6 +82,10 @@ struct Quote: Codable, Equatable {
     var reporte = "no"
     var descuento = 0
     var descMo = 0
+    /// Precios que cambiaste a mano para esta cotización (clave del concepto → monto)
+    var overrides: [String: Double] = [:]
+    /// Conceptos que agregaste tú
+    var custom: [CustomLine] = []
 
     init() {}
 
@@ -99,6 +103,8 @@ struct Quote: Codable, Equatable {
         logo = s(.logo, d.logo); fotos = s(.fotos, d.fotos); textos = s(.textos, d.textos); dominio = s(.dominio, d.dominio)
         idioma = s(.idioma, d.idioma); plazo = s(.plazo, d.plazo); horas = s(.horas, d.horas); artmes = s(.artmes, d.artmes)
         reporte = s(.reporte, d.reporte); descuento = i(.descuento, 0); descMo = i(.descMo, 0)
+        overrides = (try? c.decodeIfPresent([String: Double].self, forKey: .overrides)) ?? nil ?? [:]
+        custom = (try? c.decodeIfPresent([CustomLine].self, forKey: .custom)) ?? nil ?? []
     }
 
     /// Arma la cotización inicial a partir de las respuestas del formulario.
@@ -118,6 +124,14 @@ struct Quote: Codable, Equatable {
         if tel.hasPrefix("+506") || (tel.count == 8 && !tel.hasPrefix("+")) { q.mercado = "cr" }
         return q
     }
+}
+
+/// Un concepto que agregas tú a la cotización (por ejemplo, "Migrar página vieja").
+struct CustomLine: Codable, Equatable, Identifiable {
+    var id = UUID().uuidString
+    var text = ""
+    var amount: Double = 0
+    var monthly = false
 }
 
 /// Un formulario recibido (un archivo formularios/<id>.json del repo privado).

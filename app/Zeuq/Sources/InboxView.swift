@@ -80,6 +80,18 @@ struct FormRow: View {
     let item: FormItem
 
     var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(String(item.nombre.prefix(1)).uppercased())
+                .font(.headline)
+                .foregroundStyle(.white)
+                .frame(width: 38, height: 38)
+                .background((item.estado == "nuevo" ? Color.accentColor : Color.gray).gradient, in: Circle())
+            details
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var details: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(item.titulo).font(.headline)
             Text([item.rubro, item.date.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? ""]
@@ -96,7 +108,6 @@ struct FormRow: View {
                 }
             }
         }
-        .padding(.vertical, 4)
     }
 }
 

@@ -20,6 +20,12 @@ for c in cases {
     }
     if fails == 0 { print("✅ \(c.name)") }
 }
+// Precios cambiados a mano y conceptos propios
+var qo = Quote()
+qo.overrides = ["base": 700]
+qo.custom = [CustomLine(text: "Migración", amount: 200), CustomLine(text: "Correo", amount: 10, monthly: true)]
+let ro = Pricing.compute(qo, Ajustes())
+if ro.list != 900 || ro.monthly != 85 || ro.lines.first?.original != 900 { print("❌ precios a mano: \(ro.list) \(ro.monthly)"); fails += 1 } else { print("✅ precios a mano") }
 // La cotización guardada sin algunos campos se debe poder leer
 let partial = try JSONDecoder().decode(Quote.self, from: Data(#"{"mercado":"cr","descuento":10}"#.utf8))
 if partial.mercado != "cr" || partial.descuento != 10 || partial.diseno != "plantilla" { print("❌ lectura parcial"); fails += 1 } else { print("✅ lectura parcial") }

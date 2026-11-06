@@ -1,0 +1,158 @@
+import SwiftUI
+
+extension Color {
+    /// Fondo de la página y de las tarjetas, según el sistema
+    static var pageBackground: Color {
+        #if os(iOS)
+        Color(uiColor: .systemGroupedBackground)
+        #else
+        Color(nsColor: .windowBackgroundColor)
+        #endif
+    }
+    static var cardBackground: Color {
+        #if os(iOS)
+        Color(uiColor: .secondarySystemGroupedBackground)
+        #else
+        Color(nsColor: .controlBackgroundColor)
+        #endif
+    }
+}
+
+/// Tarjeta con título e ícono de color, para separar cada sección.
+struct Card<Content: View>: View {
+    let title: String
+    let icon: String
+    var color: Color = .accentColor
+    var subtitle: String? = nil
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(color.gradient, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title).font(.headline)
+                    if let subtitle { Text(subtitle).font(.caption).foregroundStyle(.secondary) }
+                }
+                Spacer(minLength: 0)
+            }
+            content
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+/// Fila "etiqueta: valor" para las respuestas del cliente.
+struct InfoRow: View {
+    let label: String
+    let value: String
+    var muted = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(value).font(.body).foregroundStyle(muted ? .secondary : .primary).textSelection(.enabled)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Opciones tocables como en la página (una sola o varias).
+struct OptionGrid: View {
+    let question: Question
+    @Binding var q: Quote
+
+    private let columns = [GridItem(.adaptive(minimum: 150), spacing: 8)]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(question.label).font(.subheadline.weight(.semibold))
+            if let h = question.help { Text(h).font(.caption).foregroundStyle(.secondary) }
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+                ForEach(question.opts) { o in
+                    let selected = question.multi ? Pricing.list(q, question.id).contains(o.v) : Pricing.value(q, question.id) == o.v
+                    Button {
+                        if question.multi { Pricing.toggle(&q, question.id, o.v, !selected) }
+                        else { Pricing.setValue(&q, question.id, o.v) }
+                    } label: {
+                        HStack(alignment: .top, spacing: 6) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(o.t).font(.subheadline.weight(.medium)).multilineTextAlignment(.leading)
+                                let c = Pricing.chip(o, mercado: q.mercado)
+                                if !c.isEmpty {
+                                    Text(c).font(.caption.weight(.semibold)).monospacedDigit()
+                                        .foregroundStyle(selected ? Color.accentColor : .secondary)
+                                }
+                            }
+                            Spacer(minLength: 0)
+                            if question.multi {
+                                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(selected ? Color.accentColor : .secondary)
+                            }
+                        }
+                        .padding(10)
+                        .frame(maxWidth: .infinity, minHeight: 56, alignment: .topLeading)
+                        .background(selected ? Color.accentColor.opacity(0.14) : Color.secondary.opacity(0.08),
+                                    in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(selected ? Color.accentColor : .clear, lineWidth: 1.5))
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+}
+
+/// Campo de monto en dólares que se puede editar.
+struct AmountField: View {
+    @Binding var value: Double
+    var body: some View {
+        HStack(spacing: 2) {
+            Text("$").foregroundStyle(.secondary)
+            TextField("0", value: $value, format: .number.precision(.fractionLength(0)))
+                #if os(iOS)
+                .keyboardType(.numberPad)
+                #endif
+                .multilineTextAlignment(.trailing)
+                .monospacedDigit()
+                .frame(width: 80)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+    }
+}
+
+/// Íconos y colores de cada sección del cotizador.
+enum SectionStyle {
+    static func icon(_ title: String) -> String {
+        switch title {
+        case "Diseño y páginas": return "paintbrush.pointed.fill"
+        case "Funciones": return "calendar.badge.clock"
+        case "Contenido": return "doc.richtext.fill"
+        case "Marca y materiales": return "photo.on.rectangle.angled"
+        case "Idioma y plazo": return "globe"
+        case "Mantenimiento": return "wrench.and.screwdriver.fill"
+        default: return "square.grid.2x2.fill"
+        }
+    }
+    static func color(_ title: String) -> Color {
+        switch title {
+        case "Diseño y páginas": return .pink
+        case "Funciones": return .orange
+        case "Contenido": return .teal
+        case "Marca y materiales": return .purple
+        case "Idioma y plazo": return .indigo
+        case "Mantenimiento": return .gray
+        default: return .accentColor
+        }
+    }
+}

@@ -97,6 +97,11 @@ struct PriceLine: Identifiable {
     let group: String
     let text: String
     let amount: Double
+    /// Clave del concepto para poder cambiarle el precio (vacía en ajustes y conceptos propios)
+    var key = ""
+    /// Precio calculado antes de que lo cambiaras a mano
+    var original: Double? = nil
+    var customID: String? = nil
 }
 
 struct PriceResult {
@@ -193,49 +198,69 @@ enum Pricing {
         let rates = aj.rates(q.mercado)
         func px(_ n: Double) -> Double { round(n * f, to: 5) }
         var r = PriceResult()
-        func add(_ g: String, _ t: String, _ a: Double) { r.lines.append(PriceLine(group: g, text: t, amount: a)); r.subtotal += a }
+        func add(_ g: String, _ t: String, _ a: Double, _ key: String) {
+            if let o = q.overrides[key], o != a {
+                r.lines.append(PriceLine(group: g, text: t, amount: o, key: key, original: a)); r.subtotal += o
+            } else {
+                r.lines.append(PriceLine(group: g, text: t, amount: a, key: key)); r.subtotal += a
+            }
+        }
 
-        add("Proyecto", "Sitio base (4 páginas)", rates.base)
+        add("Proyecto", "Sitio base (4 páginas)", rates.base, "base")
         let d = Catalog.opt("diseno", q.diseno)
-        if d.p > 0 { add("Proyecto", "Diseño: " + d.t.lowercased(), px(d.p)) }
-        for v in q.paginas { let o = Catalog.opt("paginas", v); add("Proyecto", "Página: " + o.t, px(o.p)) }
+        if d.p > 0 { add("Proyecto", "Diseño: " + d.t.lowercased(), px(d.p), "diseno") }
+        for v in q.paginas { let o = Catalog.opt("paginas", v); add("Proyecto", "Página: " + o.t, px(o.p), "paginas." + v) }
         if q.reservas != "no" {
             let o = Catalog.opt("reservas", q.reservas)
-            add("Funciones", "Reservas: " + o.t.lowercased(), px(o.p))
+            add("Funciones", "Reservas: " + o.t.lowercased(), px(o.p), "reservas")
             let m = Catalog.opt("modalidad", q.modalidad)
-            if m.p > 0 { add("Funciones", "Citas " + m.t.lowercased(), px(m.p)) }
+            if m.p > 0 { add("Funciones", "Citas " + m.t.lowercased(), px(m.p), "modalidad") }
         }
-        if q.tienda != "no" { let o = Catalog.opt("tienda", q.tienda); add("Funciones", "Tienda: " + o.t.lowercased(), px(o.p)) }
-        if q.membresia == "si" { add("Funciones", "Membresía", px(1500)) }
-        if q.formulario == "si" { add("Funciones", "Formulario especial", px(250)) }
-        for v in q.extras { let o = Catalog.opt("extras", v); add("Funciones", o.t, px(o.p)) }
+        if q.tienda != "no" { let o = Catalog.opt("tienda", q.tienda); add("Funciones", "Tienda: " + o.t.lowercased(), px(o.p), "tienda") }
+        if q.membresia == "si" { add("Funciones", "Membresía", px(1500), "membresia") }
+        if q.formulario == "si" { add("Funciones", "Formulario especial", px(250), "formulario") }
+        for v in q.extras { let o = Catalog.opt("extras", v); add("Funciones", o.t, px(o.p), "extras." + v) }
         let blog = q.blog != "no"
         if blog {
             let o = Catalog.opt("blog", q.blog)
-            add("Contenido", "Blog " + o.t.lowercased(), px(o.p))
+            add("Contenido", "Blog " + o.t.lowercased(), px(o.p), "blog")
             let u = px(Catalog.opt("autor", q.autor).p)
             let n = q.articulos
-            if n > 0 { add("Contenido", "\(n) artículo\(n > 1 ? "s" : "") iniciales (\(money(u)) c/u)", Double(n) * u) }
+            if n > 0 { add("Contenido", "\(n) artículo\(n > 1 ? "s" : "") iniciales (\(money(u)) c/u)", Double(n) * u, "articulos") }
         }
-        if q.videos == "biblioteca" { add("Contenido", "Biblioteca de videos", px(350)) }
-        if q.logo == "no" { add("Marca", "Logo sencillo", px(300)) }
-        if q.fotos == "banco" { add("Marca", "Fotos de banco", px(100)) }
-        if q.textos == "yo" { add("Marca", "Redacción de textos", px(300)) }
+        if q.videos == "biblioteca" { add("Contenido", "Biblioteca de videos", px(350), "videos") }
+        if q.logo == "no" { add("Marca", "Logo sencillo", px(300), "logo") }
+        if q.fotos == "banco" { add("Marca", "Fotos de banco", px(100), "fotos") }
+        if q.textos == "yo" { add("Marca", "Redacción de textos", px(300), "textos") }
+        for c in q.custom where !c.monthly {
+            r.lines.append(PriceLine(group: "Tus conceptos", text: c.text.isEmpty ? "Concepto" : c.text, amount: c.amount, customID: c.id))
+            r.subtotal += c.amount
+        }
 
         var list = r.subtotal
         if q.idioma == "bi" { let a = r.subtotal * 0.25; r.adjustments.append(PriceLine(group: "Ajustes", text: "Bilingüe (+25%)", amount: a)); list += a }
         if q.plazo == "urgente" { let a = r.subtotal * 0.2; r.adjustments.append(PriceLine(group: "Ajustes", text: "Urgente (+20%)", amount: a)); list += a }
         r.list = round(list, to: 50)
 
-        func addm(_ t: String, _ a: Double) { r.monthlyLines.append(PriceLine(group: "Mensual", text: t, amount: a)); r.monthly += a }
-        addm("Hosting, seguridad, SSL, respaldos", rates.mensual)
+        func addm(_ t: String, _ a: Double, _ key: String) {
+            if let o = q.overrides[key], o != a {
+                r.monthlyLines.append(PriceLine(group: "Mensual", text: t, amount: o, key: key, original: a)); r.monthly += o
+            } else {
+                r.monthlyLines.append(PriceLine(group: "Mensual", text: t, amount: a, key: key)); r.monthly += a
+            }
+        }
+        addm("Hosting, seguridad, SSL, respaldos", rates.mensual, "m.base")
         let h = Catalog.opt("horas", q.horas)
-        addm("Cambios: " + h.t.lowercased(), px(h.p))
+        addm("Cambios: " + h.t.lowercased(), px(h.p), "m.horas")
         let am = blog ? (Int(q.artmes) ?? 0) : 0
-        if am > 0 { addm("\(am) artículos al mes", Double(am) * px(q.autor == "yo" ? 100 : 25)) }
-        if q.idioma == "bi" { addm("Dos idiomas", px(25)) }
-        if q.tienda != "no" || q.membresia == "si" { addm("Soporte de tienda/pagos", px(50)) }
-        if q.reporte == "si" { addm("Reporte de visitas", px(30)) }
+        if am > 0 { addm("\(am) artículos al mes", Double(am) * px(q.autor == "yo" ? 100 : 25), "m.artmes") }
+        if q.idioma == "bi" { addm("Dos idiomas", px(25), "m.idioma") }
+        if q.tienda != "no" || q.membresia == "si" { addm("Soporte de tienda/pagos", px(50), "m.tienda") }
+        if q.reporte == "si" { addm("Reporte de visitas", px(30), "m.reporte") }
+        for c in q.custom where c.monthly {
+            r.monthlyLines.append(PriceLine(group: "Mensual", text: c.text.isEmpty ? "Concepto" : c.text, amount: c.amount, customID: c.id))
+            r.monthly += c.amount
+        }
 
         r.special = round(r.list * (1 - Double(q.descuento) / 100), to: 50)
         r.floor = round(r.list * (1 - Double(aj.piso) / 100), to: 50)
