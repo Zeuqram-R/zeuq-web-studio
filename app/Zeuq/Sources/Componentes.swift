@@ -65,6 +65,7 @@ struct InfoRow: View {
 
 /// Opciones tocables como en la página (una sola o varias).
 struct OptionGrid: View {
+    @EnvironmentObject var store: Store
     let question: Question
     @Binding var q: Quote
 
@@ -82,7 +83,7 @@ struct OptionGrid: View {
                         HStack(alignment: .top, spacing: 6) {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(o.t).font(.subheadline.weight(.medium)).multilineTextAlignment(.leading)
-                                let c = Pricing.chip(o, mercado: q.mercado)
+                                let c = Pricing.chip(o, question.id, mercado: q.mercado, store.ajustes)
                                 if !c.isEmpty {
                                     Text(c).font(.caption.weight(.semibold)).monospacedDigit()
                                         .foregroundStyle(selected ? Color.accentColor : .secondary)

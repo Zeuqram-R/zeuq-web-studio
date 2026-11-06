@@ -58,6 +58,13 @@ struct SettingsView: View {
                 rates("Florida / EE. UU.", $aj.fl)
                 rates("Costa Rica", $aj.cr)
                 Section {
+                    NavigationLink { PreciosView(aj: $aj) } label: {
+                        Label("Precios de cada opción", systemImage: "tag")
+                    }
+                } footer: {
+                    Text("Cambia lo que cobras por cada opción, en Florida y en Costa Rica.")
+                }
+                Section {
                     Stepper("Descuento máximo: \(aj.piso)%", value: $aj.piso, in: 0...50, step: 5)
                 } footer: {
                     Text("Hasta dónde puedes bajar el precio para amigos y familia sin perder.")
@@ -123,5 +130,84 @@ struct SettingsView: View {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
         return "\(v) (\(b))"
+    }
+}
+
+
+/// Lista de todas las opciones con su precio en el mercado elegido. Se guarda con «Guardar tarifas».
+struct PreciosView: View {
+    @Binding var aj: Ajustes
+    @State private var mercado = "fl"
+
+    private func binding(_ key: String, _ def: Double) -> Binding<Double> {
+        Binding(get: { aj.precio(mercado, key) ?? def },
+                set: { v in
+                    if v == def { aj.precios[mercado]?[key] = nil } else { aj.precios[mercado, default: [:]][key] = v }
+                })
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("Mercado", selection: $mercado) {
+                    Text("Florida / EE. UU.").tag("fl")
+                    Text("Costa Rica").tag("cr")
+                }
+                .pickerStyle(.segmented)
+            } footer: {
+                Text("Los cambios se guardan cuando vuelves y tocas «Guardar tarifas».")
+            }
+            ForEach(Catalog.sections) { s in
+                Section(s.title) {
+                    ForEach(s.questions) { q in
+                        ForEach(q.opts.filter { $0.p > 0 }) { o in
+                            row("\(q.label): \(o.t)", key: "\(q.id).\(o.v)", opt: o)
+                        }
+                    }
+                }
+            }
+            Section("Otros cobros mensuales") {
+                ForEach(Pricing.otrosCobros, id: \.key) { c in
+                    let def = Pricing.round(c.base * Catalog.factor(mercado), to: 5)
+                    priceRow(c.label, key: c.key, def: def, pct: false)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("Precios de opciones")
+    }
+
+    @ViewBuilder private func row(_ label: String, key: String, opt o: Opt) -> some View {
+        if o.k == .pct {
+            priceRow(label, key: key, def: o.p, pct: true)
+        } else {
+            priceRow(label + (o.k == .unit ? " (c/u)" : o.k == .mo ? " (al mes)" : ""), key: key,
+                     def: Pricing.round(o.p * Catalog.factor(mercado), to: 5), pct: false)
+        }
+    }
+
+    private func priceRow(_ label: String, key: String, def: Double, pct: Bool) -> some View {
+        let changed = aj.precio(mercado, key) != nil
+        return HStack {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(label).font(.callout)
+                if changed {
+                    Text("Original: " + (pct ? "\(Int(def))%" : money(def))).font(.caption).foregroundStyle(.purple)
+                }
+            }
+            Spacer()
+            if pct {
+                HStack(spacing: 2) {
+                    TextField("0", value: binding(key, def), format: .number).multilineTextAlignment(.trailing).frame(width: 50)
+                    Text("%").foregroundStyle(.secondary)
+                }
+            } else {
+                AmountField(value: binding(key, def))
+            }
+            if changed {
+                Button { aj.precios[mercado]?[key] = nil } label: { Image(systemName: "arrow.uturn.backward.circle") }
+                    .buttonStyle(.borderless)
+            }
+        }
     }
 }

@@ -44,6 +44,15 @@ if !fs.mensualidadPendiente("2026-11") || fs.horasUsadas("2026-11") != 2.5 { pri
 let enc = try JSONEncoder().encode(fs)
 let back = try JSONDecoder().decode(FormItem.self, from: enc)
 if back != fs { print("❌ guardar y leer seguimiento"); fails += 1 } else { print("✅ guardar y leer seguimiento") }
+// Precios de opciones cambiados en Ajustes
+var ajx = Ajustes()
+ajx.precios["fl"] = ["diseno.semi": 500, "idioma.bi": 30]
+var qx = Quote(); qx.diseno = "semi"; qx.idioma = "bi"
+let rx = Pricing.compute(qx, ajx)
+// base 900 + diseño 500 = 1400; +30% = 1820 → redondeo a 50 = 1800
+if rx.lines.first(where: { $0.key == "diseno" })?.amount != 500 || rx.list != 1800 { print("❌ precios de Ajustes: \(rx.list)"); fails += 1 } else { print("✅ precios de Ajustes") }
+let ajOld = try JSONDecoder().decode(Ajustes.self, from: Data(#"{"fl":{"base":1000,"mensual":80,"hora":45},"cr":{"base":450,"mensual":35,"hora":20},"piso":20}"#.utf8))
+if ajOld.fl.base != 1000 || ajOld.piso != 20 || !ajOld.precios.isEmpty { print("❌ ajustes viejos"); fails += 1 } else { print("✅ ajustes viejos") }
 // La cotización guardada sin algunos campos se debe poder leer
 let partial = try JSONDecoder().decode(Quote.self, from: Data(#"{"mercado":"cr","descuento":10}"#.utf8))
 if partial.mercado != "cr" || partial.descuento != 10 || partial.diseno != "plantilla" { print("❌ lectura parcial"); fails += 1 } else { print("✅ lectura parcial") }

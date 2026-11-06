@@ -177,8 +177,23 @@ struct Ajustes: Codable, Equatable {
     var fl = MarketRates(base: 900, mensual: 75, hora: 40)
     var cr = MarketRates(base: 450, mensual: 35, hora: 20)
     var piso = 25
+    /// Precios que cambiaste para cada opción, por mercado: precios["fl"]["diseno.semi"] = 400
+    var precios: [String: [String: Double]] = [:]
+
+    init() {}
+
+    // Lee ajustes guardados aunque les falten campos nuevos
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = Ajustes()
+        fl = (try? c.decodeIfPresent(MarketRates.self, forKey: .fl)) ?? nil ?? d.fl
+        cr = (try? c.decodeIfPresent(MarketRates.self, forKey: .cr)) ?? nil ?? d.cr
+        piso = (try? c.decodeIfPresent(Int.self, forKey: .piso)) ?? nil ?? d.piso
+        precios = (try? c.decodeIfPresent([String: [String: Double]].self, forKey: .precios)) ?? nil ?? [:]
+    }
 
     func rates(_ mercado: String) -> MarketRates { mercado == "cr" ? cr : fl }
+    func precio(_ mercado: String, _ key: String) -> Double? { precios[mercado]?[key] }
 }
 
 enum Textos {

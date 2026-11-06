@@ -182,22 +182,38 @@ enum Pricing {
     }
 
     /// Texto del precio de una opción, ya ajustado al mercado.
-    static func chip(_ o: Opt, mercado: String) -> String {
-        let f = Catalog.factor(mercado)
-        let px = round(o.p * f, to: 5)
+    /// Precio de una opción: el que pusiste en Ajustes, o el calculado para el mercado.
+    static func optPrice(_ id: String, _ v: String, _ base: Double, _ mercado: String, _ aj: Ajustes) -> Double {
+        aj.precio(mercado, "\(id).\(v)") ?? round(base * Catalog.factor(mercado), to: 5)
+    }
+
+    /// Porcentaje de una opción (bilingüe, urgente)
+    static func optPct(_ key: String, _ base: Double, _ mercado: String, _ aj: Ajustes) -> Double {
+        aj.precio(mercado, key) ?? base
+    }
+
+    /// Cobros mensuales que no son una opción del formulario
+    static let otrosCobros: [(key: String, label: String, base: Double)] = [
+        ("artmes.el", "Artículo nuevo al mes (lo escribe el cliente)", 25),
+        ("artmes.yo", "Artículo nuevo al mes (lo redactas tú)", 100),
+        ("mensual.idioma", "Mensual: mantener dos idiomas", 25),
+        ("mensual.tienda", "Mensual: soporte de tienda o pagos", 50),
+    ]
+
+    static func chip(_ o: Opt, _ qid: String, mercado: String, _ aj: Ajustes) -> String {
+        let px = optPrice(qid, o.v, o.p, mercado, aj)
         switch o.k {
         case .none: return ""
-        case .pct: return "+\(Int(o.p))%"
+        case .pct: return "+\(Int(optPct("\(qid).\(o.v)", o.p, mercado, aj)))%"
         case .unit: return "\(money(px)) c/u"
-        case .mo: return o.p > 0 ? "+\(money(px))/mes" : "Incluido"
-        case .fixed: return o.p > 0 ? "+\(money(px))" : "Incluido"
+        case .mo: return px > 0 ? "+\(money(px))/mes" : "Incluido"
+        case .fixed: return px > 0 ? "+\(money(px))" : "Incluido"
         }
     }
 
     static func compute(_ q: Quote, _ aj: Ajustes) -> PriceResult {
-        let f = Catalog.factor(q.mercado)
         let rates = aj.rates(q.mercado)
-        func px(_ n: Double) -> Double { round(n * f, to: 5) }
+        func P(_ id: String, _ v: String, _ base: Double) -> Double { optPrice(id, v, base, q.mercado, aj) }
         var r = PriceResult()
         func add(_ g: String, _ t: String, _ a: Double, _ key: String) {
             if let o = q.overrides[key], o != a {
@@ -209,38 +225,40 @@ enum Pricing {
 
         add("Proyecto", "Sitio base (4 páginas)", rates.base, "base")
         let d = Catalog.opt("diseno", q.diseno)
-        if d.p > 0 { add("Proyecto", "Diseño: " + d.t.lowercased(), px(d.p), "diseno") }
-        for v in q.paginas { let o = Catalog.opt("paginas", v); add("Proyecto", "Página: " + o.t, px(o.p), "paginas." + v) }
+        let dp = P("diseno", q.diseno, d.p)
+        if dp > 0 { add("Proyecto", "Diseño: " + d.t.lowercased(), dp, "diseno") }
+        for v in q.paginas { let o = Catalog.opt("paginas", v); add("Proyecto", "Página: " + o.t, P("paginas", v, o.p), "paginas." + v) }
         if q.reservas != "no" {
             let o = Catalog.opt("reservas", q.reservas)
-            add("Funciones", "Reservas: " + o.t.lowercased(), px(o.p), "reservas")
+            add("Funciones", "Reservas: " + o.t.lowercased(), P("reservas", q.reservas, o.p), "reservas")
             let m = Catalog.opt("modalidad", q.modalidad)
-            if m.p > 0 { add("Funciones", "Citas " + m.t.lowercased(), px(m.p), "modalidad") }
+            let mp = P("modalidad", q.modalidad, m.p)
+            if mp > 0 { add("Funciones", "Citas " + m.t.lowercased(), mp, "modalidad") }
         }
-        if q.tienda != "no" { let o = Catalog.opt("tienda", q.tienda); add("Funciones", "Tienda: " + o.t.lowercased(), px(o.p), "tienda") }
-        if q.membresia == "si" { add("Funciones", "Membresía", px(1500), "membresia") }
-        if q.formulario == "si" { add("Funciones", "Formulario especial", px(250), "formulario") }
-        for v in q.extras { let o = Catalog.opt("extras", v); add("Funciones", o.t, px(o.p), "extras." + v) }
+        if q.tienda != "no" { let o = Catalog.opt("tienda", q.tienda); add("Funciones", "Tienda: " + o.t.lowercased(), P("tienda", q.tienda, o.p), "tienda") }
+        if q.membresia == "si" { add("Funciones", "Membresía", P("membresia", "si", 1500), "membresia") }
+        if q.formulario == "si" { add("Funciones", "Formulario especial", P("formulario", "si", 250), "formulario") }
+        for v in q.extras { let o = Catalog.opt("extras", v); add("Funciones", o.t, P("extras", v, o.p), "extras." + v) }
         let blog = q.blog != "no"
         if blog {
             let o = Catalog.opt("blog", q.blog)
-            add("Contenido", "Blog " + o.t.lowercased(), px(o.p), "blog")
-            let u = px(Catalog.opt("autor", q.autor).p)
+            add("Contenido", "Blog " + o.t.lowercased(), P("blog", q.blog, o.p), "blog")
+            let u = P("autor", q.autor, Catalog.opt("autor", q.autor).p)
             let n = q.articulos
             if n > 0 { add("Contenido", "\(n) artículo\(n > 1 ? "s" : "") iniciales (\(money(u)) c/u)", Double(n) * u, "articulos") }
         }
-        if q.videos == "biblioteca" { add("Contenido", "Biblioteca de videos", px(350), "videos") }
-        if q.logo == "no" { add("Marca", "Logo sencillo", px(300), "logo") }
-        if q.fotos == "banco" { add("Marca", "Fotos de banco", px(100), "fotos") }
-        if q.textos == "yo" { add("Marca", "Redacción de textos", px(300), "textos") }
+        if q.videos == "biblioteca" { add("Contenido", "Biblioteca de videos", P("videos", "biblioteca", 350), "videos") }
+        if q.logo == "no" { add("Marca", "Logo sencillo", P("logo", "no", 300), "logo") }
+        if q.fotos == "banco" { add("Marca", "Fotos de banco", P("fotos", "banco", 100), "fotos") }
+        if q.textos == "yo" { add("Marca", "Redacción de textos", P("textos", "yo", 300), "textos") }
         for c in q.custom where !c.monthly {
             r.lines.append(PriceLine(group: "Tus conceptos", text: c.text.isEmpty ? "Concepto" : c.text, amount: c.amount, customID: c.id))
             r.subtotal += c.amount
         }
 
         var list = r.subtotal
-        if q.idioma == "bi" { let a = r.subtotal * 0.25; r.adjustments.append(PriceLine(group: "Ajustes", text: "Bilingüe (+25%)", amount: a)); list += a }
-        if q.plazo == "urgente" { let a = r.subtotal * 0.2; r.adjustments.append(PriceLine(group: "Ajustes", text: "Urgente (+20%)", amount: a)); list += a }
+        if q.idioma == "bi" { let pc = optPct("idioma.bi", 25, q.mercado, aj); let a = r.subtotal * pc / 100; r.adjustments.append(PriceLine(group: "Ajustes", text: "Bilingüe (+\(Int(pc))%)", amount: a)); list += a }
+        if q.plazo == "urgente" { let pc = optPct("plazo.urgente", 20, q.mercado, aj); let a = r.subtotal * pc / 100; r.adjustments.append(PriceLine(group: "Ajustes", text: "Urgente (+\(Int(pc))%)", amount: a)); list += a }
         r.list = round(list, to: 50)
 
         func addm(_ t: String, _ a: Double, _ key: String) {
@@ -252,12 +270,12 @@ enum Pricing {
         }
         addm("Hosting, seguridad, SSL, respaldos", rates.mensual, "m.base")
         let h = Catalog.opt("horas", q.horas)
-        addm("Cambios: " + h.t.lowercased(), px(h.p), "m.horas")
+        addm("Cambios: " + h.t.lowercased(), P("horas", q.horas, h.p), "m.horas")
         let am = blog ? (Int(q.artmes) ?? 0) : 0
-        if am > 0 { addm("\(am) artículos al mes", Double(am) * px(q.autor == "yo" ? 100 : 25), "m.artmes") }
-        if q.idioma == "bi" { addm("Dos idiomas", px(25), "m.idioma") }
-        if q.tienda != "no" || q.membresia == "si" { addm("Soporte de tienda/pagos", px(50), "m.tienda") }
-        if q.reporte == "si" { addm("Reporte de visitas", px(30), "m.reporte") }
+        if am > 0 { addm("\(am) artículos al mes", Double(am) * P("artmes", q.autor == "yo" ? "yo" : "el", q.autor == "yo" ? 100 : 25), "m.artmes") }
+        if q.idioma == "bi" { addm("Dos idiomas", P("mensual", "idioma", 25), "m.idioma") }
+        if q.tienda != "no" || q.membresia == "si" { addm("Soporte de tienda/pagos", P("mensual", "tienda", 50), "m.tienda") }
+        if q.reporte == "si" { addm("Reporte de visitas", P("reporte", "si", 30), "m.reporte") }
         for c in q.custom where c.monthly {
             r.monthlyLines.append(PriceLine(group: "Mensual", text: c.text.isEmpty ? "Concepto" : c.text, amount: c.amount, customID: c.id))
             r.monthly += c.amount
