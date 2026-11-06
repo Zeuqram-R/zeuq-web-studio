@@ -51,6 +51,7 @@ struct SettingsView: View {
     @State private var aj = Ajustes()
     @State private var saving = false
     @State private var note: String?
+    @AppStorage(Bloqueo.key) private var bloqueo = false
 
     var body: some View {
         NavigationStack {
@@ -79,6 +80,15 @@ struct SettingsView: View {
                     }
                     .disabled(saving || aj == store.ajustes)
                     if let note { Text(note).font(.footnote).foregroundStyle(.secondary) }
+                }
+                Section {
+                    Toggle("Pedir \(Bloqueo.nombre) al abrir", isOn: Binding(get: { bloqueo }, set: { on in
+                        Task { if await Bloqueo.verificar(on ? "Activar el bloqueo de Zeuq" : "Quitar el bloqueo de Zeuq") { bloqueo = on } }
+                    }))
+                } header: {
+                    Text("Seguridad")
+                } footer: {
+                    Text("La app se bloquea cada vez que la cierras o cambias a otra app.")
                 }
                 Section("Avisos") {
                     Button("Permitir notificaciones") { Store.requestNotifications() }
