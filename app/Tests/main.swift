@@ -58,6 +58,20 @@ if colones(1000, 460) != "₡460.000" { print("❌ colones: \(colones(1000, 460)
 var qc = Quote(); qc.mercado = "cr"
 let cc = Proposal.text(Proposal.content(fi, qc, Ajustes(), lang: "es", enColones: true))
 if !cc.contains("En colones") { print("❌ propuesta en colones"); fails += 1 } else { print("✅ propuesta en colones") }
+// Revisor de idioma
+let casos: [(String, String?)] = [("Migrar contenido de Instagram", "es"), ("Migrate Instagram content", "en"),
+                                   ("Sesión de fotos para la página", "es"), ("Monthly social media posts", "en"), ("SEO", nil)]
+var malIdioma = 0
+for (t, esperado) in casos {
+    let d = IdiomaCheck.detect(t)
+    print("   idioma «\(t)» → \(d ?? "no sé") (esperado \(esperado ?? "no sé"))")
+    if d != esperado { malIdioma += 1 }
+}
+var qi = Quote(); qi.custom = [CustomLine(text: "Migrar contenido de Instagram", amount: 100)]
+let avisos = IdiomaCheck.issues(qi, lang: "en").count
+qi.ignorarIdioma = ["Migrar contenido de Instagram"]
+let avisosIgnorados = IdiomaCheck.issues(qi, lang: "en").count
+if malIdioma > 0 || avisos != 1 || avisosIgnorados != 0 { print("❌ revisor de idioma (\(malIdioma) mal)"); fails += 1 } else { print("✅ revisor de idioma") }
 // La cotización guardada sin algunos campos se debe poder leer
 let partial = try JSONDecoder().decode(Quote.self, from: Data(#"{"mercado":"cr","descuento":10}"#.utf8))
 if partial.mercado != "cr" || partial.descuento != 10 || partial.diseno != "plantilla" { print("❌ lectura parcial"); fails += 1 } else { print("✅ lectura parcial") }

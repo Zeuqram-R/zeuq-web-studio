@@ -86,6 +86,8 @@ struct Quote: Codable, Equatable {
     var overrides: [String: Double] = [:]
     /// Conceptos que agregaste tú
     var custom: [CustomLine] = []
+    /// Textos que revisaste y están bien aunque no estén en el idioma de la propuesta
+    var ignorarIdioma: [String] = []
 
     init() {}
 
@@ -105,6 +107,7 @@ struct Quote: Codable, Equatable {
         reporte = s(.reporte, d.reporte); descuento = i(.descuento, 0); descMo = i(.descMo, 0)
         overrides = (try? c.decodeIfPresent([String: Double].self, forKey: .overrides)) ?? nil ?? [:]
         custom = (try? c.decodeIfPresent([CustomLine].self, forKey: .custom)) ?? nil ?? []
+        ignorarIdioma = (try? c.decodeIfPresent([String].self, forKey: .ignorarIdioma)) ?? nil ?? []
     }
 
     /// Arma la cotización inicial a partir de las respuestas del formulario.

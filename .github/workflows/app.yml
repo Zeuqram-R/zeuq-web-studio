@@ -23,7 +23,7 @@ jobs:
       - name: Pruebas de precios (iguales al cotizador web)
         run: |
           cd app
-          swiftc -O Zeuq/Sources/Modelos.swift Zeuq/Sources/Pricing.swift Zeuq/Sources/Propuesta.swift Zeuq/Sources/Datos.swift Tests/main.swift -o pruebas
+          swiftc -O Zeuq/Sources/Modelos.swift Zeuq/Sources/Pricing.swift Zeuq/Sources/Propuesta.swift Zeuq/Sources/Datos.swift Zeuq/Sources/Idioma.swift Tests/main.swift -o pruebas
           ./pruebas Tests/cases.json
 
       - name: Capturas de pantalla (para revisar el diseño)

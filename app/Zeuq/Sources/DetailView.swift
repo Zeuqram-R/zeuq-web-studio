@@ -90,7 +90,7 @@ struct DetailView: View {
             #endif
         }
         .sheet(isPresented: $showProposal) {
-            ProposalSheet(item: item, q: q, ajustes: store.ajustes, whatsappNumber: whatsappNumber,
+            ProposalSheet(item: item, q: $q, ajustes: store.ajustes, whatsappNumber: whatsappNumber,
                           onCopy: { copy($0) },
                           onSent: ["nuevo", "procesado"].contains(item.estado) ? { Task { await changeEstado("enviada") } } : nil)
         }
@@ -445,7 +445,18 @@ struct CotizacionTab: View {
     @ViewBuilder private func lineRow(_ l: PriceLine) -> some View {
         if let cid = l.customID, let idx = q.custom.firstIndex(where: { $0.id == cid }) {
             HStack(spacing: 8) {
-                TextField("Nombre del concepto", text: $q.custom[idx].text)
+                VStack(alignment: .leading, spacing: 2) {
+                    TextField("Nombre del concepto", text: $q.custom[idx].text)
+                    let clientLang = item.lang == "en" ? "en" : "es"
+                    let t = q.custom[idx].text.trimmingCharacters(in: .whitespaces)
+                    if !q.ignorarIdioma.contains(t), let d = IdiomaCheck.detect(t), d != clientLang {
+                        HStack(spacing: 6) {
+                            Label("Parece \(IdiomaCheck.nombre(d)); el cliente habla \(IdiomaCheck.nombre(clientLang))", systemImage: "character.bubble")
+                                .font(.caption).foregroundStyle(.orange)
+                            Button("Está bien") { q.ignorarIdioma.append(t) }.font(.caption).buttonStyle(.borderless)
+                        }
+                    }
+                }
                 AmountField(value: $q.custom[idx].amount)
                 Button(role: .destructive) { q.custom.remove(at: idx) } label: { Image(systemName: "trash") }
                     .buttonStyle(.borderless)
@@ -538,7 +549,7 @@ struct BulletLabel: LabelStyle {
 
 struct ProposalSheet: View {
     let item: FormItem
-    let q: Quote
+    @Binding var q: Quote
     let ajustes: Ajustes
     let whatsappNumber: String?
     let onCopy: (String) -> Void
@@ -547,13 +558,47 @@ struct ProposalSheet: View {
     @State private var lang: String
     @State private var pdfURL: URL?
 
-    init(item: FormItem, q: Quote, ajustes: Ajustes, whatsappNumber: String?, onCopy: @escaping (String) -> Void, onSent: (() -> Void)?) {
-        self.item = item; self.q = q; self.ajustes = ajustes; self.whatsappNumber = whatsappNumber
+    @State private var langOk = false
+
+    init(item: FormItem, q: Binding<Quote>, ajustes: Ajustes, whatsappNumber: String?, onCopy: @escaping (String) -> Void, onSent: (() -> Void)?) {
+        self.item = item; _q = q; self.ajustes = ajustes; self.whatsappNumber = whatsappNumber
         self.onCopy = onCopy; self.onSent = onSent
         _lang = State(initialValue: item.lang == "en" ? "en" : "es")
     }
 
     @State private var enColones = false
+    /// Avisos de idioma: la propuesta no está en el idioma del cliente, o un concepto tuyo quedó en otro idioma
+    @ViewBuilder private var revisorIdioma: some View {
+        let clientLang = item.lang == "en" ? "en" : "es"
+        let issues = IdiomaCheck.issues(q, lang: lang)
+        if (lang != clientLang && !langOk) || !issues.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Revisa el idioma", systemImage: "character.bubble.fill").font(.subheadline.weight(.semibold)).foregroundStyle(.orange)
+                if lang != clientLang && !langOk {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("El cliente llenó el formulario en \(IdiomaCheck.nombre(clientLang)) y la propuesta está en \(IdiomaCheck.nombre(lang)).")
+                            .font(.callout)
+                        Spacer()
+                        Button("Cambiar") { lang = clientLang }.buttonStyle(.bordered).controlSize(.small)
+                        Button("Está bien") { langOk = true }.buttonStyle(.borderless).controlSize(.small)
+                    }
+                }
+                ForEach(issues) { i in
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("«\(i.text)» parece estar en \(IdiomaCheck.nombre(i.detected)).").font(.callout)
+                        Spacer()
+                        Button("Está bien") { q.ignorarIdioma.append(i.text) }.buttonStyle(.borderless).controlSize(.small)
+                    }
+                }
+                if !issues.isEmpty {
+                    Text("Corrígelo en la pestaña Cotización → Precios, o márcalo como bien si así lo quieres.").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .padding(12)
+            .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+    }
+
     private var content: ProposalContent { Proposal.content(item, q, ajustes, lang: lang, enColones: enColones && q.mercado == "cr") }
     private var text: String { Proposal.text(content) }
     private var whatsapp: URL? {
@@ -574,6 +619,7 @@ struct ProposalSheet: View {
                         .pickerStyle(.segmented)
                         Text(item.lang == "en" ? "El cliente llenó el formulario en inglés." : "El cliente llenó el formulario en español.")
                             .font(.caption).foregroundStyle(.secondary)
+                        revisorIdioma
                         if q.mercado == "cr" {
                             Toggle("Mostrar también en colones (₡\(Int(ajustes.tipoCambio)) por $1)", isOn: $enColones)
                                 .font(.callout)
