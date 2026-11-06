@@ -19,6 +19,12 @@ final class Store: ObservableObject {
     @Published var hasToken = Keychain.get("token") != nil
     /// Último tipo de cambio del BCCR que copió la nube
     @Published var tipoCambio: TipoCambio?
+    /// Cuándo vence el token de esta app (lo dice GitHub)
+    @Published var appTokenVence: Date?
+
+    var avisos: [Aviso] {
+        Avisos.calcular(appToken: appTokenVence, gastosToken: parseGitHubDate(tipoCambio?.tokenVence), tipoCambioFecha: tipoCambio?.fecha)
+    }
 
     private var shas: [String: String] = [:]     // id → sha del archivo en el repo
     private var ajustesSha: String?
@@ -37,6 +43,7 @@ final class Store: ObservableObject {
         var ajustesSha: String?
         var lastSync: Date?
         var tipoCambio: TipoCambio?
+        var appTokenVence: Date?
     }
 
     init() { loadCache() }
@@ -92,6 +99,7 @@ final class Store: ObservableObject {
                 tipoCambio = tc
             }
             if ajustes.tipoCambioAuto, let tc = tipoCambio { ajustes.tipoCambio = tc.venta }
+            if let v = parseGitHubDate(c.tokenVence) { appTokenVence = v }
             let files = try await c.list(Repo.folder).filter { $0.name.hasSuffix(".json") }
             var byId = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
             var newShas: [String: String] = [:]
@@ -182,11 +190,11 @@ final class Store: ObservableObject {
 
     private func loadCache() {
         guard let d = try? Data(contentsOf: cacheURL), let c = try? JSONDecoder().decode(Cache.self, from: d) else { return }
-        items = c.items; shas = c.shas; ajustes = c.ajustes; ajustesSha = c.ajustesSha; lastSync = c.lastSync; tipoCambio = c.tipoCambio
+        items = c.items; shas = c.shas; ajustes = c.ajustes; ajustesSha = c.ajustesSha; lastSync = c.lastSync; tipoCambio = c.tipoCambio; appTokenVence = c.appTokenVence
     }
 
     private func saveCache() {
-        let c = Cache(items: items, shas: shas, ajustes: ajustes, ajustesSha: ajustesSha, lastSync: lastSync, tipoCambio: tipoCambio)
+        let c = Cache(items: items, shas: shas, ajustes: ajustes, ajustesSha: ajustesSha, lastSync: lastSync, tipoCambio: tipoCambio, appTokenVence: appTokenVence)
         if let d = try? JSONEncoder().encode(c) { try? d.write(to: cacheURL, options: .atomic) }
     }
 
@@ -229,6 +237,18 @@ final class Store: ObservableObject {
             UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "seg-" + k, content: content, trigger: nil))
         }
         UserDefaults.standard.set(Array(avisados), forKey: "seguimiento")
+
+        // Tokens por vencer y tipo de cambio viejo: un aviso por tramo (14, 7, 3 y 1 días)
+        var vistos = Set(UserDefaults.standard.stringArray(forKey: "avisosApp") ?? [])
+        for a in avisos where !vistos.contains(a.id) {
+            vistos.insert(a.id)
+            let content = UNMutableNotificationContent()
+            content.title = a.titulo
+            content.body = a.detalle
+            content.sound = .default
+            UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "aviso-" + a.id, content: content, trigger: nil))
+        }
+        UserDefaults.standard.set(Array(vistos), forKey: "avisosApp")
         #if os(iOS)
         UNUserNotificationCenter.current().setBadgeCount(items.filter { $0.estado == "nuevo" }.count)
         #endif

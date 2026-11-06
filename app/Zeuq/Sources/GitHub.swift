@@ -33,6 +33,8 @@ final class GitHubClient {
     private let token: String
     private let session: URLSession
     private let base = "/repos/\(Repo.owner)/\(Repo.name)"
+    /// Fecha en que vence este token, según GitHub (llega en cada respuesta)
+    private(set) var tokenVence: String?
 
     init(token: String) {
         self.token = token
@@ -60,6 +62,7 @@ final class GitHubClient {
         let resp: URLResponse
         do { (data, resp) = try await session.data(for: r) } catch { throw GitHubError(status: 0, message: "Sin conexión") }
         guard let http = resp as? HTTPURLResponse else { throw GitHubError(status: 0, message: "Sin conexión") }
+        if let v = http.value(forHTTPHeaderField: "github-authentication-token-expiration") { tokenVence = v }
         let json = data.isEmpty ? nil : try? JSONSerialization.jsonObject(with: data)
         guard (200..<300).contains(http.statusCode) else {
             let msg = (json as? [String: Any])?["message"] as? String ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)

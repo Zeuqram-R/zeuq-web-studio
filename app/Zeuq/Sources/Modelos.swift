@@ -225,6 +225,8 @@ struct TipoCambio: Codable, Equatable {
     var compra: Double
     var venta: Double
     var fuente: String?
+    /// Cuándo vence el token que lee el tipo de cambio (lo anota la nube)
+    var tokenVence: String?
 }
 
 /// Monto en colones a partir de dólares, redondeado a ₡100: "₡1.587.500"

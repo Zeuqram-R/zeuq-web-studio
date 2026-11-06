@@ -123,6 +123,12 @@ struct SettingsView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Cuenta") {
+                    if let d = store.appTokenVence {
+                        LabeledContent("Token de la app vence", value: Avisos.fecha(d))
+                    }
+                    if let d = parseGitHubDate(store.tipoCambio?.tokenVence) {
+                        LabeledContent("Token del tipo de cambio vence", value: Avisos.fecha(d))
+                    }
                     if let d = store.lastSync {
                         LabeledContent("Última actualización", value: d.formatted(date: .abbreviated, time: .shortened))
                     }

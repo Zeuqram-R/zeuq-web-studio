@@ -22,6 +22,13 @@ struct InboxView: View {
                 .padding(.vertical, 8)
 
                 List(selection: $selection) {
+                    ForEach(store.avisos) { a in
+                        VStack(alignment: .leading, spacing: 3) {
+                            Label(a.titulo, systemImage: "exclamationmark.shield.fill").font(.callout.weight(.semibold)).foregroundStyle(.orange)
+                            Text(a.detalle).font(.caption).foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 2)
+                    }
                     if let m = store.message {
                         Label(m, systemImage: "exclamationmark.triangle")
                             .font(.footnote)

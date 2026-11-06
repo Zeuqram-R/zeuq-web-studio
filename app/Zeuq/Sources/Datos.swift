@@ -85,3 +85,56 @@ extension FormItem {
     }
 }
 
+
+
+/// Lee la fecha que manda GitHub, por ejemplo "2027-11-06 06:00:00 UTC".
+func parseGitHubDate(_ s: String?) -> Date? {
+    guard let s, !s.isEmpty else { return nil }
+    let f = DateFormatter()
+    f.locale = Locale(identifier: "en_US_POSIX")
+    f.timeZone = TimeZone(identifier: "UTC")
+    for fmt in ["yyyy-MM-dd HH:mm:ss 'UTC'", "yyyy-MM-dd HH:mm:ss Z", "yyyy-MM-dd"] {
+        f.dateFormat = fmt
+        if let d = f.date(from: s) { return d }
+    }
+    return nil
+}
+
+/// Avisos de mantenimiento de la app: tokens por vencer y tipo de cambio sin actualizar.
+struct Aviso: Identifiable, Equatable {
+    let id: String
+    let titulo: String
+    let detalle: String
+}
+
+enum Avisos {
+    static func dias(hasta d: Date, desde hoy: Date = Date()) -> Int {
+        Int((d.timeIntervalSince(hoy) / 86400).rounded(.down))
+    }
+
+    static func fecha(_ d: Date) -> String {
+        d.formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier: "es_CR")))
+    }
+
+    static func calcular(appToken: Date?, gastosToken: Date?, tipoCambioFecha: String?, hoy: Date = Date()) -> [Aviso] {
+        var out: [Aviso] = []
+        func token(_ id: String, _ nombre: String, _ d: Date?, _ como: String) {
+            guard let d else { return }
+            let n = dias(hasta: d, desde: hoy)
+            guard n <= 14 else { return }
+            let cuando = n < 0 ? "venció el \(fecha(d))" : n == 0 ? "vence hoy" : "vence en \(n) día\(n == 1 ? "" : "s") (\(fecha(d)))"
+            // El id cambia en 14, 7, 3 y 1 días para volver a avisar
+            let tramo = n <= 1 ? 1 : n <= 3 ? 3 : n <= 7 ? 7 : 14
+            out.append(Aviso(id: "\(id)-\(tramo)", titulo: "El \(nombre) \(cuando)", detalle: como))
+        }
+        token("app", "token de la app", appToken,
+              "Crea uno nuevo en GitHub (Developer settings → Fine-grained tokens) con los mismos permisos y pégalo en Ajustes → Quitar token, en cada dispositivo.")
+        token("gastos", "token del tipo de cambio", gastosToken,
+              "Crea uno nuevo de solo lectura para control-gastos-datos y reemplaza el secret GASTOS_TOKEN en el repo zeuq-confirmaciones.")
+        if let f = tipoCambioFecha, let d = parseGitHubDate(f), dias(hasta: hoy, desde: d) >= 3 {
+            out.append(Aviso(id: "tc-\(f)", titulo: "El tipo de cambio no se actualiza desde el \(fecha(d))",
+                             detalle: "Revisa que el proceso «Tipo de cambio» de tu app de gastos esté funcionando. Mientras tanto se usa el último dato."))
+        }
+        return out
+    }
+}

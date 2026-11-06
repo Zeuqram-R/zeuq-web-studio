@@ -72,6 +72,12 @@ let avisos = IdiomaCheck.issues(qi, lang: "en").count
 qi.ignorarIdioma = ["Migrar contenido de Instagram"]
 let avisosIgnorados = IdiomaCheck.issues(qi, lang: "en").count
 if malIdioma > 0 || avisos != 1 || avisosIgnorados != 0 { print("❌ revisor de idioma (\(malIdioma) mal)"); fails += 1 } else { print("✅ revisor de idioma") }
+// Avisos de tokens y tipo de cambio
+let hoy = parseGitHubDate("2027-10-30 06:00:00 UTC")!
+let av = Avisos.calcular(appToken: parseGitHubDate("2027-11-06 06:00:00 UTC"), gastosToken: parseGitHubDate("2028-01-01 06:00:00 UTC"),
+                         tipoCambioFecha: "2027-10-25", hoy: hoy)
+let avOk = Avisos.calcular(appToken: parseGitHubDate("2027-12-30 06:00:00 UTC"), gastosToken: nil, tipoCambioFecha: "2027-10-30", hoy: hoy)
+if av.count != 2 || av[0].id != "app-7" || !av[0].titulo.contains("7 días") || !avOk.isEmpty { print("❌ avisos: \(av.map(\.id)) \(avOk.map(\.id))"); fails += 1 } else { print("✅ avisos de tokens") }
 // La cotización guardada sin algunos campos se debe poder leer
 let partial = try JSONDecoder().decode(Quote.self, from: Data(#"{"mercado":"cr","descuento":10}"#.utf8))
 if partial.mercado != "cr" || partial.descuento != 10 || partial.diseno != "plantilla" { print("❌ lectura parcial"); fails += 1 } else { print("✅ lectura parcial") }
