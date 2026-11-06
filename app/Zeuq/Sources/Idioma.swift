@@ -14,6 +14,10 @@ enum IdiomaCheck {
     static func detect(_ text: String) -> String? {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard t.count >= 3 else { return nil }
+        // Una sola palabra (SEO, Logo, Instagram…) no dice en qué idioma está, salvo que tenga tildes o ñ
+        let hasSpanishLetters = t.range(of: "[áéíóúñ¿¡]", options: [.regularExpression, .caseInsensitive]) != nil
+        let wordCount = t.split { !$0.isLetter }.count
+        guard wordCount >= 2 || hasSpanishLetters else { return nil }
         let r = NLLanguageRecognizer()
         r.languageConstraints = [.english, .spanish]
         r.processString(t)
@@ -26,7 +30,7 @@ enum IdiomaCheck {
         let hitsEn = words.filter { en.contains($0) }.count
         sEs += Double(hitsEs) * 0.25
         sEn += Double(hitsEn) * 0.25
-        if t.range(of: "[áéíóúñ¿¡]", options: [.regularExpression, .caseInsensitive]) != nil { sEs += 0.5 }
+        if hasSpanishLetters { sEs += 0.5 }
         guard abs(sEs - sEn) >= 0.3 else { return nil }
         return sEs > sEn ? "es" : "en"
     }
