@@ -25,6 +25,14 @@ struct Render {
         item.cotizacion = q
         let store = Store.shared
         let r = Pricing.compute(q, store.ajustes)
+        var seg = item
+        seg.estado = "entregada"
+        seg.historial = [Evento(estado: "procesado", fecha: "2026-10-20T15:00:00Z"), Evento(estado: "enviada", fecha: "2026-10-21T15:00:00Z"),
+                         Evento(estado: "aceptada", fecha: "2026-10-24T15:00:00Z"), Evento(estado: "entregada", fecha: "2026-11-02T15:00:00Z")]
+        seg.pagos = Pagos(adelanto: "2026-10-24T15:00:00Z", saldo: nil, inicioMantenimiento: "2026-10", mensualidades: ["2026-10": "2026-10-30T15:00:00Z"])
+        seg.horasLog = [RegistroHoras(fecha: nowISO(), horas: 2.5, nota: "Cambié precios"), RegistroHoras(fecha: nowISO(), horas: 1.5, nota: "Fotos nuevas")]
+        seg.notas = "Prefiere colores oscuros. Paga por Zelle."
+        shot(SeguimientoTab(item: seg, r: r, track: .constant(Track(seg)), onEstado: { _ in }, onPersist: {}), "seguimiento-light.png", false, store)
         for dark in [false, true] {
             let suffix = dark ? "dark" : "light"
             shot(ClienteTab(item: item), "cliente-\(suffix).png", dark, store)

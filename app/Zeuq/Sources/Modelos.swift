@@ -143,6 +143,11 @@ struct FormItem: Codable, Identifiable, Equatable {
     var confirmado: String?
     var data: [String: JSONValue]
     var cotizacion: Quote?
+    /// Seguimiento: cambios de etapa con fecha, notas internas, pagos y horas de mantenimiento
+    var historial: [Evento]?
+    var notas: String?
+    var pagos: Pagos?
+    var horasLog: [RegistroHoras]?
 
     var nombre: String { data["nombre"]?.text ?? "" }
     var negocio: String { data["negocio"]?.text ?? "" }

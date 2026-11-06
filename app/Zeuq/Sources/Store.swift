@@ -44,6 +44,14 @@ final class Store: ObservableObject {
         items.filter { $0.estado == estado }.sorted { $0.fecha > $1.fecha }
     }
 
+    func items(grupo: String) -> [FormItem] {
+        let estados = Etapa.grupos.first(where: { $0.id == grupo })?.estados ?? []
+        return items.filter { estados.contains($0.estado) }.sorted { a, b in
+            if a.necesitaSeguimiento != b.necesitaSeguimiento { return a.necesitaSeguimiento }
+            return a.fecha > b.fecha
+        }
+    }
+
     // MARK: Token
 
     func saveToken(_ t: String) async -> String? {
@@ -121,11 +129,19 @@ final class Store: ObservableObject {
         }
     }
 
-    func setEstado(_ item: FormItem, _ estado: String) async {
+    /// Cambia la etapa y la anota en el historial con la fecha.
+    @discardableResult
+    func setEstado(_ item: FormItem, _ estado: String) async -> Bool {
         var it = item
         it.estado = estado
-        if estado == "procesado", it.cotizacion == nil { it.cotizacion = item.quote }
-        _ = await save(it, note: estado == "archivado" ? "Formulario archivado" : estado == "procesado" ? "Formulario procesado" : "Formulario restaurado")
+        if it.cotizacion == nil, estado != "nuevo" { it.cotizacion = item.quote }
+        it.historial = (it.historial ?? []) + [Evento(estado: estado, fecha: nowISO())]
+        if estado == "entregada" {
+            var p = it.pagos ?? Pagos()
+            if p.inicioMantenimiento == nil { p.inicioMantenimiento = Mes.next(Mes.key()) }
+            it.pagos = p
+        }
+        return await save(it, note: "Etapa: " + Etapa.nombre(estado))
     }
 
     func saveAjustes(_ a: Ajustes) async -> Bool {
@@ -192,6 +208,20 @@ final class Store: ObservableObject {
         }
         seen.formUnion(items.map(\.id))
         UserDefaults.standard.set(Array(seen), forKey: key)
+
+        // Propuestas que llevan 3 días sin respuesta: un aviso por cada envío
+        var avisados = Set(UserDefaults.standard.stringArray(forKey: "seguimiento") ?? [])
+        for it in items where it.necesitaSeguimiento {
+            let k = it.id + (it.historial?.last(where: { $0.estado == "enviada" })?.fecha ?? "")
+            guard !avisados.contains(k) else { continue }
+            avisados.insert(k)
+            let content = UNMutableNotificationContent()
+            content.title = "Dale seguimiento"
+            content.body = "Le mandaste la propuesta a \(it.titulo) hace 3 días y no ha respondido."
+            content.sound = .default
+            UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "seg-" + k, content: content, trigger: nil))
+        }
+        UserDefaults.standard.set(Array(avisados), forKey: "seguimiento")
         #if os(iOS)
         UNUserNotificationCenter.current().setBadgeCount(items.filter { $0.estado == "nuevo" }.count)
         #endif
