@@ -26,6 +26,21 @@ jobs:
           swiftc -O Zeuq/Sources/Modelos.swift Zeuq/Sources/Pricing.swift Tests/main.swift -o pruebas
           ./pruebas Tests/cases.json
 
+      - name: Capturas de pantalla (para revisar el diseño)
+        continue-on-error: true
+        run: |
+          cd app
+          mkdir -p capturas
+          swiftc -parse-as-library $(ls Zeuq/Sources/*.swift | grep -v ZeuqApp.swift) Tests/render.swift -o render
+          ./render
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capturas
+          path: app/capturas
+          if-no-files-found: ignore
+
       - name: Proyecto de Xcode
         run: |
           brew install xcodegen
