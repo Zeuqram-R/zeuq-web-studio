@@ -1,0 +1,80 @@
+name: App Zeuq
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', '.github/workflows/app.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: app
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Proyecto de Xcode
+        run: |
+          brew install xcodegen
+          cd app
+          sed -i '' "s/CURRENT_PROJECT_VERSION: \"1\"/CURRENT_PROJECT_VERSION: \"${GITHUB_RUN_NUMBER}\"/" project.yml
+          xcodegen generate
+          xcodebuild -version
+
+      - name: Compilar iPhone y iPad (sin firmar)
+        run: |
+          set -o pipefail
+          cd app
+          xcodebuild -project Zeuq.xcodeproj -scheme Zeuq -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build-ios \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee ios.log | grep -E "error:|BUILD" || true
+          test -d build-ios/Build/Products/Release-iphoneos/Zeuq.app || {
+            grep -E "error:" ios.log | sort -u | head -40 | while IFS= read -r l; do echo "::error::$l"; done
+            exit 1
+          }
+
+      - name: Compilar Mac
+        run: |
+          set -o pipefail
+          cd app
+          xcodebuild -project Zeuq.xcodeproj -scheme ZeuqMac -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath build-mac \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee mac.log | grep -E "error:|BUILD" || true
+          test -d build-mac/Build/Products/Release/Zeuq.app || {
+            grep -E "error:" mac.log | sort -u | head -40 | while IFS= read -r l; do echo "::error::$l"; done
+            exit 1
+          }
+
+      - name: Armar archivos
+        run: |
+          cd app
+          VER=$(grep -E '^ *MARKETING_VERSION:' project.yml | head -1 | sed -E 's/.*"(.*)".*/\1/')
+          N=${GITHUB_RUN_NUMBER}
+          echo "VER=$VER" >> "$GITHUB_ENV"
+          mkdir -p Payload
+          cp -R build-ios/Build/Products/Release-iphoneos/Zeuq.app Payload/
+          zip -qry "Zeuq_${VER}-${N}.ipa" Payload
+          codesign --force --deep -s - build-mac/Build/Products/Release/Zeuq.app
+          ditto -c -k --keepParent build-mac/Build/Products/Release/Zeuq.app "Zeuq-Mac_${VER}-${N}.zip"
+          ls -lh *.ipa *.zip
+
+      - name: Publicar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          N=${GITHUB_RUN_NUMBER}
+          cd app
+          # GitHub no deja paréntesis en el nombre del archivo: se baja como Zeuq_1.0-3.ipa y en la página sale como Zeuq_1.0(3).ipa.
+          gh release create "app-${N}" \
+            "Zeuq_${VER}-${N}.ipa#Zeuq_${VER}(${N}).ipa" \
+            "Zeuq-Mac_${VER}-${N}.zip#Zeuq-Mac_${VER}(${N}).zip" \
+            --title "Zeuq ${VER} (${N})" --notes "iPhone/iPad: instalar el .ipa con Signulous. Mac: descomprimir el .zip y mover Zeuq a Aplicaciones. Commit ${GITHUB_SHA::7}." --latest

@@ -1,0 +1,127 @@
+import SwiftUI
+
+/// Primera vez: pegar el token de GitHub.
+struct SetupView: View {
+    @EnvironmentObject var store: Store
+    @State private var token = ""
+    @State private var error: String?
+    @State private var busy = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Zeuq Web Studio").font(.largeTitle.weight(.bold))
+                        Text("Para ver los formularios de tus clientes, conecta la app con tu repo privado zeuq-confirmaciones usando un token de GitHub.")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 6)
+                }
+                Section {
+                    SecureField("github_pat_…", text: $token)
+                        .textContentType(.password)
+                        #if os(iOS)
+                        .textInputAutocapitalization(.never)
+                        #endif
+                        .autocorrectionDisabled()
+                    Button(busy ? "Revisando…" : "Conectar") {
+                        busy = true
+                        Task { error = await store.saveToken(token); busy = false }
+                    }
+                    .disabled(busy || token.isEmpty)
+                } header: {
+                    Text("Token de GitHub")
+                } footer: {
+                    Text("Se guarda solo en el Llavero de este dispositivo.")
+                }
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange) }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Conectar")
+        }
+    }
+}
+
+struct SettingsView: View {
+    @EnvironmentObject var store: Store
+    @Environment(\.dismiss) private var dismiss
+    @State private var aj = Ajustes()
+    @State private var saving = false
+    @State private var note: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                rates("Florida / EE. UU.", $aj.fl)
+                rates("Costa Rica", $aj.cr)
+                Section {
+                    Stepper("Descuento máximo: \(aj.piso)%", value: $aj.piso, in: 0...50, step: 5)
+                } footer: {
+                    Text("Hasta dónde puedes bajar el precio para amigos y familia sin perder.")
+                }
+                Section {
+                    Button(saving ? "Guardando…" : "Guardar tarifas") {
+                        saving = true
+                        Task {
+                            note = await store.saveAjustes(aj) ? "Tarifas guardadas en todos tus dispositivos." : store.message
+                            saving = false
+                        }
+                    }
+                    .disabled(saving || aj == store.ajustes)
+                    if let note { Text(note).font(.footnote).foregroundStyle(.secondary) }
+                }
+                Section("Avisos") {
+                    Button("Permitir notificaciones") { Store.requestNotifications() }
+                    Text("La app revisa cada 5 minutos mientras está abierta. En el iPhone y el iPad también revisa en segundo plano cuando iOS lo permite, que puede tardar. Para enterarte al instante, sigue usando Telegram.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section("Cuenta") {
+                    if let d = store.lastSync {
+                        LabeledContent("Última actualización", value: d.formatted(date: .abbreviated, time: .shortened))
+                    }
+                    Button("Quitar token de GitHub", role: .destructive) { store.removeToken(); dismiss() }
+                }
+                Section {
+                    LabeledContent("Versión", value: version)
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Ajustes")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button("Listo") { dismiss() } }
+            }
+            .onAppear { aj = store.ajustes }
+        }
+        #if os(macOS)
+        .frame(minWidth: 460, minHeight: 560)
+        #endif
+    }
+
+    private func rates(_ title: String, _ r: Binding<MarketRates>) -> some View {
+        Section(title) {
+            field("Sitio base", r.base)
+            field("Mantenimiento base /mes", r.mensual)
+            field("Hora extra", r.hora)
+        }
+    }
+
+    private func field(_ label: String, _ v: Binding<Double>) -> some View {
+        LabeledContent(label) {
+            TextField(label, value: v, format: .number)
+                .multilineTextAlignment(.trailing)
+                #if os(iOS)
+                .keyboardType(.numberPad)
+                #endif
+                .frame(maxWidth: 120)
+        }
+    }
+
+    private var version: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        return "\(v) (\(b))"
+    }
+}
