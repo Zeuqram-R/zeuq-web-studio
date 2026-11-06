@@ -34,12 +34,13 @@ jobs:
           swiftc -parse-as-library $(ls Zeuq/Sources/*.swift | grep -v ZeuqApp.swift) Tests/render.swift -o render
           ./render
 
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: capturas
-          path: app/capturas
-          if-no-files-found: ignore
+      - name: Guardar capturas en la rama "capturas"
+        continue-on-error: true
+        run: |
+          cd app/capturas
+          git init -q && git checkout -q -b capturas
+          git add -A && git -c user.name="Zeuq Bot" -c user.email="zeuq-bot@users.noreply.github.com" commit -q -m "Capturas ${GITHUB_RUN_NUMBER}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" capturas
 
       - name: Proyecto de Xcode
         run: |
