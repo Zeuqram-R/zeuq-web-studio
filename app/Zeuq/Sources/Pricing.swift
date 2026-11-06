@@ -93,7 +93,8 @@ enum Catalog {
 }
 
 struct PriceLine: Identifiable {
-    let id = UUID()
+    /// Identidad fija para que la fila no se recree (y no se cierre el teclado) al cambiar un precio
+    var id: String { customID ?? (key.isEmpty ? group + "|" + text : key) }
     let group: String
     let text: String
     let amount: Double

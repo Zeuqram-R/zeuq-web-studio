@@ -111,23 +111,79 @@ struct OptionGrid: View {
     }
 }
 
-/// Campo de monto en dólares que se puede editar.
+/// Campo de monto en dólares. Guarda el valor al terminar de escribir (Listo, Enter o tocar fuera),
+/// así el teclado no se cierra con cada dígito.
 struct AmountField: View {
     @Binding var value: Double
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
     var body: some View {
         HStack(spacing: 2) {
             Text("$").foregroundStyle(.secondary)
-            TextField("0", value: $value, format: .number.precision(.fractionLength(0)))
+            TextField("0", text: $text)
+                .focused($focused)
                 #if os(iOS)
                 .keyboardType(.numberPad)
                 #endif
                 .multilineTextAlignment(.trailing)
                 .monospacedDigit()
                 .frame(width: 80)
+                .onSubmit(commit)
+                .onAppear { text = Self.format(value) }
+                .onChange(of: focused) { _, f in if !f { commit() } }
+                .onChange(of: value) { _, v in if !focused { text = Self.format(v) } }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .background(Color.secondary.opacity(focused ? 0.18 : 0.1), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(focused ? Color.accentColor : .clear))
+    }
+
+    private func commit() {
+        let clean = text.filter { $0.isNumber || $0 == "." }
+        if let v = Double(clean) { if v != value { value = v } } else { text = Self.format(value) }
+    }
+
+    static func format(_ v: Double) -> String { String(Int(v.rounded())) }
+}
+
+/// Barra visual del margen de descuento: la franja azul es lo que te puedes permitir,
+/// la rayita es el descuento que estás dando.
+struct MarginBar: View {
+    let discount: Int
+    let floor: Int
+    let listText: String
+    let floorText: String
+    private let maxValue = 50.0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            GeometryReader { g in
+                let w = g.size.width
+                let over = discount > floor
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.secondary.opacity(0.18)).frame(height: 10)
+                    Capsule().fill(Color.accentColor.opacity(0.6)).frame(width: w * min(1, Double(floor) / maxValue), height: 10)
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(over ? Color.orange : Color.primary)
+                        .frame(width: 4, height: 22)
+                        .offset(x: min(w - 4, max(0, w * Double(discount) / maxValue - 2)))
+                }
+                .frame(height: 22)
+            }
+            .frame(height: 22)
+            HStack {
+                Text("0% · Lista \(listText)")
+                Spacer()
+                Text("Tu mínimo \(floorText) (−\(floor)%)").foregroundStyle(Color.accentColor)
+                Spacer()
+                Text("−50%")
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
+        .animation(.easeOut(duration: 0.15), value: discount)
     }
 }
 

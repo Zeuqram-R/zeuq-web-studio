@@ -54,6 +54,7 @@ struct DetailView: View {
             }
         }
         .background(Color.pageBackground)
+        .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) { priceBar }
         .navigationTitle(item.nombre.isEmpty ? "Formulario" : item.nombre)
         #if os(iOS)
@@ -65,6 +66,15 @@ struct DetailView: View {
                     .disabled(saving || !dirty)
             }
             ToolbarItem(placement: .secondaryAction) { moreMenu }
+            #if os(iOS)
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Listo") {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
+                .bold()
+            }
+            #endif
         }
         .sheet(isPresented: $showProposal) {
             ProposalSheet(text: proposal, whatsapp: whatsappURL(withText: true), onCopy: { copy(proposal) },
@@ -434,6 +444,9 @@ struct CotizacionTab: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack { Text("Descuento al proyecto"); Spacer(); Text("\(q.descuento)%").monospacedDigit().bold() }
                 Slider(value: Binding(get: { Double(q.descuento) }, set: { q.descuento = Int($0) }), in: 0...50, step: 5)
+                    .tint(q.descuento > store.ajustes.piso ? .orange : .accentColor)
+                MarginBar(discount: q.descuento, floor: store.ajustes.piso, listText: money(r.list), floorText: money(r.floor))
+                    .padding(.top, 4)
             }
             VStack(alignment: .leading, spacing: 4) {
                 HStack { Text("Descuento mensual"); Spacer(); Text("\(q.descMo)%").monospacedDigit().bold() }
@@ -446,7 +459,6 @@ struct CotizacionTab: View {
                     Tag(text: "Dentro de tu margen", color: .green)
                 }
                 Spacer()
-                Text("Tu mínimo: \(money(r.floor))").font(.caption).foregroundStyle(.secondary)
             }
             Divider()
             VStack(spacing: 6) {
