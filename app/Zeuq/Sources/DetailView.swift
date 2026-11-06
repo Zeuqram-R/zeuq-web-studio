@@ -225,7 +225,7 @@ struct ClienteTab: View {
                     }
                 }
                 if let d = item.date {
-                    Text("Recibido el \(d.formatted(date: .long, time: .shortened))").font(.caption).foregroundStyle(.secondary)
+                    Text("Recibido el " + d.formatted(.dateTime.day().month(.wide).year().hour().minute().locale(Locale(identifier: "es_CR")))).font(.caption).foregroundStyle(.secondary)
                 }
             }
             .padding(16)

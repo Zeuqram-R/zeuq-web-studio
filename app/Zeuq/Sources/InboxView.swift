@@ -94,7 +94,7 @@ struct FormRow: View {
     private var details: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(item.titulo).font(.headline)
-            Text([item.rubro, item.date.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? ""]
+            Text([item.rubro, item.date.map { $0.formatted(.dateTime.day().month(.abbreviated).hour().minute().locale(Locale(identifier: "es_CR"))) } ?? ""]
                 .filter { !$0.isEmpty }.joined(separator: " · "))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
