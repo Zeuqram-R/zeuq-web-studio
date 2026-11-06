@@ -20,6 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pruebas de precios (iguales al cotizador web)
+        run: |
+          cd app
+          swiftc -O Zeuq/Sources/Modelos.swift Zeuq/Sources/Pricing.swift Tests/main.swift -o pruebas
+          ./pruebas Tests/cases.json
+
       - name: Proyecto de Xcode
         run: |
           brew install xcodegen

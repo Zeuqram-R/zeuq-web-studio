@@ -83,6 +83,24 @@ struct Quote: Codable, Equatable {
     var descuento = 0
     var descMo = 0
 
+    init() {}
+
+    // Lee cotizaciones guardadas aunque les falten campos (por ejemplo, de una versión vieja de la app).
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = Quote()
+        func s(_ k: CodingKeys, _ def: String) -> String { (try? c.decodeIfPresent(String.self, forKey: k)) ?? nil ?? def }
+        func a(_ k: CodingKeys) -> [String] { (try? c.decodeIfPresent([String].self, forKey: k)) ?? nil ?? [] }
+        func i(_ k: CodingKeys, _ def: Int) -> Int { (try? c.decodeIfPresent(Int.self, forKey: k)) ?? nil ?? def }
+        mercado = s(.mercado, d.mercado); iva = s(.iva, d.iva); diseno = s(.diseno, d.diseno); paginas = a(.paginas)
+        reservas = s(.reservas, d.reservas); modalidad = s(.modalidad, d.modalidad); tienda = s(.tienda, d.tienda)
+        membresia = s(.membresia, d.membresia); formulario = s(.formulario, d.formulario); extras = a(.extras)
+        blog = s(.blog, d.blog); autor = s(.autor, d.autor); articulos = i(.articulos, 0); videos = s(.videos, d.videos)
+        logo = s(.logo, d.logo); fotos = s(.fotos, d.fotos); textos = s(.textos, d.textos); dominio = s(.dominio, d.dominio)
+        idioma = s(.idioma, d.idioma); plazo = s(.plazo, d.plazo); horas = s(.horas, d.horas); artmes = s(.artmes, d.artmes)
+        reporte = s(.reporte, d.reporte); descuento = i(.descuento, 0); descMo = i(.descMo, 0)
+    }
+
     /// Arma la cotización inicial a partir de las respuestas del formulario.
     static func from(_ d: [String: JSONValue]) -> Quote {
         var q = Quote()

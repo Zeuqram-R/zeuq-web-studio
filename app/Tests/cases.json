@@ -1,0 +1,181 @@
+[
+ {
+  "name": "form-fl",
+  "q": {
+   "diseno": "medida",
+   "paginas": [
+    "testimonios",
+    "portafolio",
+    "galeria",
+    "faq",
+    "precios"
+   ],
+   "reservas": "paquetes",
+   "modalidad": "ambas",
+   "tienda": "completa",
+   "membresia": "nose",
+   "formulario": "no",
+   "extras": [
+    "instagram",
+    "seo",
+    "google",
+    "calculadora"
+   ],
+   "blog": "no",
+   "videos": "insertados",
+   "logo": "no",
+   "fotos": "banco",
+   "textos": "yo",
+   "dominio": "no",
+   "idioma": "bi",
+   "plazo": "urgente",
+   "horas": "1",
+   "reporte": "si",
+   "mercado": "fl",
+   "iva": "no",
+   "descuento": 0,
+   "descMo": 0
+  },
+  "expected": {
+   "list": 7600,
+   "monthly": 160,
+   "special": 7600,
+   "specialMonthly": 160,
+   "specialIva": 7600,
+   "floor": 5700,
+   "lines": 17
+  }
+ },
+ {
+  "name": "form-cr-iva-desc",
+  "q": {
+   "diseno": "medida",
+   "paginas": [
+    "testimonios",
+    "portafolio",
+    "galeria",
+    "faq",
+    "precios"
+   ],
+   "reservas": "paquetes",
+   "modalidad": "ambas",
+   "tienda": "completa",
+   "membresia": "nose",
+   "formulario": "no",
+   "extras": [
+    "instagram",
+    "seo",
+    "google",
+    "calculadora"
+   ],
+   "blog": "no",
+   "videos": "insertados",
+   "logo": "no",
+   "fotos": "banco",
+   "textos": "yo",
+   "dominio": "no",
+   "idioma": "bi",
+   "plazo": "urgente",
+   "horas": "1",
+   "reporte": "si",
+   "mercado": "cr",
+   "iva": "si",
+   "descuento": 15,
+   "descMo": 10
+  },
+  "expected": {
+   "list": 4000,
+   "monthly": 75,
+   "special": 3400,
+   "specialMonthly": 70,
+   "specialIva": 3842,
+   "floor": 3000,
+   "lines": 17
+  }
+ },
+ {
+  "name": "ejemplo-fl-desc",
+  "q": {
+   "diseno": "semi",
+   "paginas": [
+    "testimonios",
+    "precios"
+   ],
+   "reservas": "cobrar",
+   "modalidad": "ambas",
+   "tienda": "no",
+   "membresia": "no",
+   "formulario": "si",
+   "extras": [
+    "newsletter",
+    "seo"
+   ],
+   "blog": "completo",
+   "autor": "el",
+   "articulos": 5,
+   "videos": "insertados",
+   "logo": "si",
+   "fotos": "banco",
+   "textos": "el",
+   "dominio": "no",
+   "idioma": "bi",
+   "plazo": "normal",
+   "horas": "3",
+   "artmes": "2",
+   "reporte": "no",
+   "mercado": "fl",
+   "iva": "no",
+   "descuento": 15,
+   "descMo": 0
+  },
+  "expected": {
+   "list": 4000,
+   "monthly": 190,
+   "special": 3400,
+   "specialMonthly": 190,
+   "specialIva": 3400,
+   "floor": 3000,
+   "lines": 12
+  }
+ },
+ {
+  "name": "blanco-fl",
+  "q": {
+   "mercado": "fl",
+   "iva": "no",
+   "descuento": 0,
+   "descMo": 0
+  },
+  "expected": {
+   "list": 900,
+   "monthly": 75,
+   "special": 900,
+   "specialMonthly": 75,
+   "specialIva": 900,
+   "floor": 700,
+   "lines": 1
+  }
+ },
+ {
+  "name": "blog-cr",
+  "q": {
+   "mercado": "cr",
+   "iva": "no",
+   "blog": "completo",
+   "autor": "yo",
+   "articulos": 3,
+   "artmes": "4",
+   "descuento": 30,
+   "descMo": 20
+  },
+  "expected": {
+   "list": 850,
+   "monthly": 195,
+   "special": 600,
+   "specialMonthly": 155,
+   "specialIva": 600,
+   "floor": 650,
+   "lines": 3
+  }
+ }
+]
