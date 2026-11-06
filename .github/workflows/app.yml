@@ -36,7 +36,7 @@ jobs:
             -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build-ios \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             build 2>&1 | tee ios.log | grep -E "error:|BUILD" || true
-          test -d build-ios/Build/Products/Release-iphoneos/Zeuq.app || {
+          grep -q "BUILD SUCCEEDED" ios.log && test -f build-ios/Build/Products/Release-iphoneos/Zeuq.app/Zeuq || {
             grep -E "error:" ios.log | sort -u | head -40 | while IFS= read -r l; do echo "::error::$l"; done
             exit 1
           }
@@ -49,7 +49,7 @@ jobs:
             -destination 'generic/platform=macOS' -derivedDataPath build-mac \
             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee mac.log | grep -E "error:|BUILD" || true
-          test -d build-mac/Build/Products/Release/Zeuq.app || {
+          grep -q "BUILD SUCCEEDED" mac.log && test -f build-mac/Build/Products/Release/Zeuq.app/Contents/MacOS/Zeuq || {
             grep -E "error:" mac.log | sort -u | head -40 | while IFS= read -r l; do echo "::error::$l"; done
             exit 1
           }

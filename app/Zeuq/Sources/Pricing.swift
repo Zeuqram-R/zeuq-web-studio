@@ -19,7 +19,7 @@ struct Question: Identifiable {
     let opts: [Opt]
 }
 
-struct Section: Identifiable {
+struct CatalogSection: Identifiable {
     let title: String
     let questions: [Question]
     var id: String { title }
@@ -29,8 +29,8 @@ enum Catalog {
     /// Factor de cada mercado sobre los precios de referencia de cada opción (tarifas de freelancer principiante).
     static func factor(_ mercado: String) -> Double { mercado == "cr" ? 0.4 : 0.75 }
 
-    static let sections: [Section] = [
-        Section(title: "Diseño y páginas", questions: [
+    static let sections: [CatalogSection] = [
+        CatalogSection(title: "Diseño y páginas", questions: [
             Question(id: "diseno", label: "Nivel de diseño", help: "La base incluye Inicio, Sobre mí, Servicios y Contacto, adaptable a celular.", opts: [
                 Opt(v: "plantilla", t: "Sencillo con sus colores", p: 0), Opt(v: "semi", t: "Con detalles de su marca", p: 500),
                 Opt(v: "medida", t: "Único, desde cero", p: 1200)]),
@@ -39,7 +39,7 @@ enum Catalog {
                 Opt(v: "galeria", t: "Galería", p: 150), Opt(v: "faq", t: "Preguntas frecuentes", p: 100),
                 Opt(v: "precios", t: "Precios y paquetes", p: 100), Opt(v: "equipo", t: "Equipo", p: 100)]),
         ]),
-        Section(title: "Funciones", questions: [
+        CatalogSection(title: "Funciones", questions: [
             Question(id: "reservas", label: "Reservas", opts: [
                 Opt(v: "no", t: "No", p: 0), Opt(v: "agendar", t: "Solo agendar", p: 250),
                 Opt(v: "cobrar", t: "Agendar y cobrar", p: 450), Opt(v: "paquetes", t: "Paquetes de citas", p: 650)]),
@@ -56,24 +56,24 @@ enum Catalog {
                 Opt(v: "seo", t: "SEO básico", p: 300), Opt(v: "google", t: "Google Business", p: 150),
                 Opt(v: "calculadora", t: "Calculadora / herramienta", p: 300)]),
         ]),
-        Section(title: "Contenido", questions: [
+        CatalogSection(title: "Contenido", questions: [
             Question(id: "blog", label: "Blog", opts: [Opt(v: "no", t: "No", p: 0), Opt(v: "simple", t: "Sencillo", p: 400), Opt(v: "completo", t: "Con categorías y buscador", p: 650)]),
             Question(id: "autor", label: "Quién escribe los artículos", opts: [
                 Opt(v: "el", t: "El cliente; yo subo y doy formato", p: 40, k: .unit), Opt(v: "yo", t: "Yo los redacto", p: 120, k: .unit)]),
             Question(id: "videos", label: "Videos", opts: [Opt(v: "no", t: "No", p: 0), Opt(v: "insertados", t: "Insertados", p: 0), Opt(v: "biblioteca", t: "Biblioteca organizada", p: 350)]),
         ]),
-        Section(title: "Marca y materiales", questions: [
+        CatalogSection(title: "Marca y materiales", questions: [
             Question(id: "logo", label: "Logo", opts: [Opt(v: "si", t: "Ya tiene", p: 0), Opt(v: "no", t: "Logo sencillo", p: 300)]),
             Question(id: "fotos", label: "Fotos", opts: [Opt(v: "si", t: "Ya tiene", p: 0), Opt(v: "banco", t: "Fotos de banco", p: 100), Opt(v: "sesion", t: "Sesión aparte", p: 0)]),
             Question(id: "textos", label: "Textos de las páginas", opts: [Opt(v: "el", t: "Los manda el cliente", p: 0), Opt(v: "yo", t: "Yo los redacto", p: 300)]),
             Question(id: "dominio", label: "Dominio", help: "Si no sabe qué es, explícale y ayúdale a comprarlo; lo paga él.", opts: [
                 Opt(v: "si", t: "Ya tiene", p: 0), Opt(v: "no", t: "Hay que comprarlo", p: 0), Opt(v: "nose", t: "No sabe qué es", p: 0)]),
         ]),
-        Section(title: "Idioma y plazo", questions: [
+        CatalogSection(title: "Idioma y plazo", questions: [
             Question(id: "idioma", label: "Idioma", opts: [Opt(v: "en", t: "Inglés", p: 0), Opt(v: "es", t: "Español", p: 0), Opt(v: "bi", t: "Bilingüe", p: 25, k: .pct)]),
             Question(id: "plazo", label: "Plazo", opts: [Opt(v: "flexible", t: "Sin prisa", p: 0), Opt(v: "normal", t: "1 o 2 meses", p: 0), Opt(v: "urgente", t: "Urgente", p: 20, k: .pct)]),
         ]),
-        Section(title: "Mantenimiento", questions: [
+        CatalogSection(title: "Mantenimiento", questions: [
             Question(id: "horas", label: "Cambios al mes", help: "Base: hosting, seguridad, SSL, respaldos y actualizaciones.", opts: [
                 Opt(v: "1", t: "Pocos (1 h)", p: 0, k: .mo), Opt(v: "3", t: "Semanales (3 h)", p: 75, k: .mo), Opt(v: "5", t: "Frecuentes (5 h)", p: 150, k: .mo)]),
             Question(id: "artmes", label: "Artículos nuevos al mes", opts: [Opt(v: "0", t: "Ninguno", p: 0), Opt(v: "2", t: "2", p: 0), Opt(v: "4", t: "4", p: 0)]),
@@ -92,7 +92,7 @@ enum Catalog {
     }
 }
 
-struct Line: Identifiable {
+struct PriceLine: Identifiable {
     let id = UUID()
     let group: String
     let text: String
@@ -100,11 +100,11 @@ struct Line: Identifiable {
 }
 
 struct PriceResult {
-    var lines: [Line] = []
+    var lines: [PriceLine] = []
     var subtotal: Double = 0
-    var adjustments: [Line] = []
+    var adjustments: [PriceLine] = []
     var list: Double = 0
-    var monthlyLines: [Line] = []
+    var monthlyLines: [PriceLine] = []
     var monthly: Double = 0
     var special: Double = 0
     var floor: Double = 0
@@ -193,7 +193,7 @@ enum Pricing {
         let rates = aj.rates(q.mercado)
         func px(_ n: Double) -> Double { round(n * f, to: 5) }
         var r = PriceResult()
-        func add(_ g: String, _ t: String, _ a: Double) { r.lines.append(Line(group: g, text: t, amount: a)); r.subtotal += a }
+        func add(_ g: String, _ t: String, _ a: Double) { r.lines.append(PriceLine(group: g, text: t, amount: a)); r.subtotal += a }
 
         add("Proyecto", "Sitio base (4 páginas)", rates.base)
         let d = Catalog.opt("diseno", q.diseno)
@@ -223,11 +223,11 @@ enum Pricing {
         if q.textos == "yo" { add("Marca", "Redacción de textos", px(300)) }
 
         var list = r.subtotal
-        if q.idioma == "bi" { let a = r.subtotal * 0.25; r.adjustments.append(Line(group: "Ajustes", text: "Bilingüe (+25%)", amount: a)); list += a }
-        if q.plazo == "urgente" { let a = r.subtotal * 0.2; r.adjustments.append(Line(group: "Ajustes", text: "Urgente (+20%)", amount: a)); list += a }
+        if q.idioma == "bi" { let a = r.subtotal * 0.25; r.adjustments.append(PriceLine(group: "Ajustes", text: "Bilingüe (+25%)", amount: a)); list += a }
+        if q.plazo == "urgente" { let a = r.subtotal * 0.2; r.adjustments.append(PriceLine(group: "Ajustes", text: "Urgente (+20%)", amount: a)); list += a }
         r.list = round(list, to: 50)
 
-        func addm(_ t: String, _ a: Double) { r.monthlyLines.append(Line(group: "Mensual", text: t, amount: a)); r.monthly += a }
+        func addm(_ t: String, _ a: Double) { r.monthlyLines.append(PriceLine(group: "Mensual", text: t, amount: a)); r.monthly += a }
         addm("Hosting, seguridad, SSL, respaldos", rates.mensual)
         let h = Catalog.opt("horas", q.horas)
         addm("Cambios: " + h.t.lowercased(), px(h.p))

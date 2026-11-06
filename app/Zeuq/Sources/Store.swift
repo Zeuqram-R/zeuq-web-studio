@@ -9,7 +9,7 @@ import BackgroundTasks
 @MainActor
 final class Store: ObservableObject {
     static let shared = Store()
-    static let refreshTaskID = "com.zeuqram.zeuq.refresh"
+    nonisolated static let refreshTaskID = "com.zeuqram.zeuq.refresh"
 
     @Published var items: [FormItem] = []
     @Published var ajustes = Ajustes()
@@ -169,7 +169,7 @@ final class Store: ObservableObject {
 
     // MARK: Notificaciones
 
-    static func requestNotifications() {
+    nonisolated static func requestNotifications() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
     }
 
@@ -199,7 +199,7 @@ final class Store: ObservableObject {
 
     #if os(iOS)
     /// Le pide a iOS que vuelva a revisar en segundo plano. iOS decide cuándo (puede tardar).
-    static func scheduleBackgroundRefresh() {
+    nonisolated static func scheduleBackgroundRefresh() {
         let req = BGAppRefreshTaskRequest(identifier: refreshTaskID)
         req.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
         try? BGTaskScheduler.shared.submit(req)
