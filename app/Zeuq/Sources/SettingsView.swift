@@ -59,18 +59,31 @@ struct SettingsView: View {
                 rates("Florida / EE. UU.", $aj.fl)
                 rates("Costa Rica", $aj.cr)
                 Section {
-                    LabeledContent("Colones por $1") {
-                        TextField("460", value: $aj.tipoCambio, format: .number)
-                            .multilineTextAlignment(.trailing)
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
-                            .frame(maxWidth: 120)
+                    Toggle("Actualizar solo (BCCR, dos veces al día)", isOn: $aj.tipoCambioAuto)
+                    if aj.tipoCambioAuto {
+                        if let tc = store.tipoCambio {
+                            LabeledContent("Venta", value: "₡" + String(format: "%.2f", tc.venta))
+                            LabeledContent("Compra", value: "₡" + String(format: "%.2f", tc.compra))
+                            LabeledContent("Fecha", value: tc.fecha)
+                        } else {
+                            Text("Todavía no hay dato del BCCR. Mientras tanto se usa ₡\(String(format: "%.2f", aj.tipoCambio)).")
+                                .font(.callout).foregroundStyle(.secondary)
+                        }
+                    } else {
+                        LabeledContent("Colones por $1") {
+                            TextField("460", value: $aj.tipoCambio, format: .number)
+                                .multilineTextAlignment(.trailing)
+                                #if os(iOS)
+                                .keyboardType(.decimalPad)
+                                #endif
+                                .frame(maxWidth: 120)
+                        }
                     }
                 } header: {
                     Text("Tipo de cambio")
                 } footer: {
-                    Text("Para mostrar precios en colones a clientes de Costa Rica. Actualízalo con el tipo de cambio de venta del día.")
+                    Text(aj.tipoCambioAuto ? "Se usa el tipo de cambio de venta de referencia del BCCR, el mismo de tu app de gastos." :
+                         "Pusiste el tipo de cambio a mano. Actívalo de nuevo para que se actualice solo.")
                 }
                 Section {
                     NavigationLink { PreciosView(aj: $aj) } label: {

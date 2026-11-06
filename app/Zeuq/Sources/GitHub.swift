@@ -8,6 +8,7 @@ enum Repo {
     static let branch = "main"
     static let folder = "formularios"
     static let settings = "ajustes.json"
+    static let exchange = "tipo_cambio.json"
     static let workflow = "confirmar.yml"
 }
 

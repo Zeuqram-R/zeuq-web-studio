@@ -181,6 +181,8 @@ struct Ajustes: Codable, Equatable {
     var precios: [String: [String: Double]] = [:]
     /// Colones por cada dólar, para mostrar precios en ₡ a clientes de Costa Rica
     var tipoCambio: Double = 460
+    /// Usar el tipo de cambio del BCCR que la nube copia dos veces al día (si es false, se usa el que pusiste a mano)
+    var tipoCambioAuto = true
 
     init() {}
 
@@ -193,6 +195,7 @@ struct Ajustes: Codable, Equatable {
         piso = (try? c.decodeIfPresent(Int.self, forKey: .piso)) ?? nil ?? d.piso
         precios = (try? c.decodeIfPresent([String: [String: Double]].self, forKey: .precios)) ?? nil ?? [:]
         tipoCambio = (try? c.decodeIfPresent(Double.self, forKey: .tipoCambio)) ?? nil ?? d.tipoCambio
+        tipoCambioAuto = (try? c.decodeIfPresent(Bool.self, forKey: .tipoCambioAuto)) ?? nil ?? d.tipoCambioAuto
     }
 
     func rates(_ mercado: String) -> MarketRates { mercado == "cr" ? cr : fl }
@@ -211,6 +214,14 @@ enum Textos {
         "info": "Mostrar quién es", "clientes": "Conseguir clientes", "agendar": "Agendar citas",
         "vender": "Vender", "contenido": "Compartir contenido",
     ]
+}
+
+/// Tipo de cambio de referencia del BCCR (tipo_cambio.json del repo privado)
+struct TipoCambio: Codable, Equatable {
+    var fecha: String
+    var compra: Double
+    var venta: Double
+    var fuente: String?
 }
 
 /// Monto en colones a partir de dólares, redondeado a ₡100: "₡1.587.500"

@@ -17,6 +17,8 @@ final class Store: ObservableObject {
     @Published var message: String?
     @Published var lastSync: Date?
     @Published var hasToken = Keychain.get("token") != nil
+    /// Último tipo de cambio del BCCR que copió la nube
+    @Published var tipoCambio: TipoCambio?
 
     private var shas: [String: String] = [:]     // id → sha del archivo en el repo
     private var ajustesSha: String?
@@ -34,6 +36,7 @@ final class Store: ObservableObject {
         var ajustes: Ajustes
         var ajustesSha: String?
         var lastSync: Date?
+        var tipoCambio: TipoCambio?
     }
 
     init() { loadCache() }
@@ -85,6 +88,10 @@ final class Store: ObservableObject {
             if case let (sha, data)? = try await c.getFile(Repo.settings), let a = try? JSONDecoder().decode(Ajustes.self, from: data) {
                 ajustes = a; ajustesSha = sha
             }
+            if case let (_, data)? = try? await c.getFile(Repo.exchange), let tc = try? JSONDecoder().decode(TipoCambio.self, from: data) {
+                tipoCambio = tc
+            }
+            if ajustes.tipoCambioAuto, let tc = tipoCambio { ajustes.tipoCambio = tc.venta }
             let files = try await c.list(Repo.folder).filter { $0.name.hasSuffix(".json") }
             var byId = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
             var newShas: [String: String] = [:]
@@ -175,11 +182,11 @@ final class Store: ObservableObject {
 
     private func loadCache() {
         guard let d = try? Data(contentsOf: cacheURL), let c = try? JSONDecoder().decode(Cache.self, from: d) else { return }
-        items = c.items; shas = c.shas; ajustes = c.ajustes; ajustesSha = c.ajustesSha; lastSync = c.lastSync
+        items = c.items; shas = c.shas; ajustes = c.ajustes; ajustesSha = c.ajustesSha; lastSync = c.lastSync; tipoCambio = c.tipoCambio
     }
 
     private func saveCache() {
-        let c = Cache(items: items, shas: shas, ajustes: ajustes, ajustesSha: ajustesSha, lastSync: lastSync)
+        let c = Cache(items: items, shas: shas, ajustes: ajustes, ajustesSha: ajustesSha, lastSync: lastSync, tipoCambio: tipoCambio)
         if let d = try? JSONEncoder().encode(c) { try? d.write(to: cacheURL, options: .atomic) }
     }
 
