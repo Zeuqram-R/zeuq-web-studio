@@ -87,15 +87,15 @@ struct DetailView: View {
     private var priceBar: some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Proyecto").font(.caption).foregroundStyle(.secondary)
+                Text(r.iva > 0 ? "Proyecto · IVA incluido" : "Proyecto").font(.caption).foregroundStyle(.secondary)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(money(r.special)).font(.title2.weight(.bold)).monospacedDigit()
+                    Text(money(r.iva > 0 ? r.specialIva : r.special)).font(.title2.weight(.bold)).monospacedDigit()
                     if q.descuento > 0 { Text(money(r.list)).font(.caption).strikethrough().foregroundStyle(.secondary) }
                 }
             }
             VStack(alignment: .leading, spacing: 0) {
-                Text("Mensual").font(.caption).foregroundStyle(.secondary)
-                Text(money(r.specialMonthly)).font(.title3.weight(.semibold)).monospacedDigit()
+                Text(r.iva > 0 ? "Mensual · IVA incl." : "Mensual").font(.caption).foregroundStyle(.secondary)
+                Text(money(r.iva > 0 ? r.specialMonthlyIva : r.specialMonthly)).font(.title3.weight(.semibold)).monospacedDigit()
             }
             Spacer()
             Button { showProposal = true } label: {
@@ -358,6 +358,7 @@ struct CotizacionTab: View {
                     else { Tag(text: "Arriba de su presupuesto (\(label))", color: .orange) }
                 }
                 if !q.overrides.isEmpty || !q.custom.isEmpty { Tag(text: "Con precios ajustados", color: .purple) }
+                if r.iva > 0 { Tag(text: "+ IVA 13%: \(money((r.list * 1.13).rounded())) con IVA", color: .indigo) }
             }
         }
         .padding(16)
@@ -376,6 +377,10 @@ struct CotizacionTab: View {
                     HStack { Text(l.text).foregroundStyle(.secondary); Spacer(); Text("+" + money(l.amount)).monospacedDigit().foregroundStyle(.secondary) }
                         .font(.callout)
                 }
+            }
+            if r.iva > 0 {
+                HStack { Text("IVA 13% (se suma al precio final)").foregroundStyle(.indigo); Spacer(); Text("+" + money((r.list * 0.13).rounded())).monospacedDigit().foregroundStyle(.indigo) }
+                    .font(.callout)
             }
             Button { q.custom.append(CustomLine(text: "", amount: 0, monthly: false)) } label: {
                 Label("Agregar concepto al proyecto", systemImage: "plus.circle.fill")
@@ -445,9 +450,17 @@ struct CotizacionTab: View {
             }
             Divider()
             VStack(spacing: 6) {
-                totalRow("Proyecto", money(r.special), bold: true)
-                totalRow("Mensual", money(r.specialMonthly) + "/mes", bold: true)
-                if r.iva > 0 { totalRow("Con IVA 13%", "\(money(r.specialIva)) · \(money(r.specialMonthlyIva))/mes") }
+                if r.iva > 0 {
+                    totalRow("Proyecto sin IVA", money(r.special), muted: true)
+                    totalRow("IVA 13%", "+" + money(r.specialIva - r.special), muted: true)
+                    totalRow("Proyecto con IVA", money(r.specialIva), bold: true)
+                    totalRow("Mensual con IVA", money(r.specialMonthlyIva) + "/mes", bold: true)
+                    Text("Mensual sin IVA: \(money(r.specialMonthly))").font(.caption).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                } else {
+                    totalRow("Proyecto", money(r.special), bold: true)
+                    totalRow("Mensual", money(r.specialMonthly) + "/mes", bold: true)
+                }
                 totalRow("Adelanto 50%", money(r.deposit), muted: true)
                 totalRow("Primer año", money(r.firstYear), muted: true)
             }
