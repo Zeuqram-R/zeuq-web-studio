@@ -68,13 +68,11 @@ struct OptionGrid: View {
     let question: Question
     @Binding var q: Quote
 
-    private let columns = [GridItem(.adaptive(minimum: 150), spacing: 8)]
-
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(question.label).font(.subheadline.weight(.semibold))
             if let h = question.help { Text(h).font(.caption).foregroundStyle(.secondary) }
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+            ColumnsLayout(minWidth: 150, spacing: 8) {
                 ForEach(question.opts) { o in
                     let selected = question.multi ? Pricing.list(q, question.id).contains(o.v) : Pricing.value(q, question.id) == o.v
                     Button {
@@ -97,7 +95,7 @@ struct OptionGrid: View {
                             }
                         }
                         .padding(10)
-                        .frame(maxWidth: .infinity, minHeight: 56, alignment: .topLeading)
+                        .frame(maxWidth: .infinity, minHeight: 56, maxHeight: .infinity, alignment: .topLeading)
                         .background(selected ? Color.accentColor.opacity(0.14) : Color.secondary.opacity(0.08),
                                     in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -107,6 +105,49 @@ struct OptionGrid: View {
                     .buttonStyle(.plain)
                 }
             }
+        }
+    }
+}
+
+/// Columnas de ancho igual que se acomodan al ancho disponible. No es "lazy": así la página
+/// no salta de lugar cuando cambia algo (con LazyVGrid la vista se movía al primer cambio).
+struct ColumnsLayout: Layout {
+    var minWidth: CGFloat = 150
+    var spacing: CGFloat = 8
+
+    private func columns(_ width: CGFloat) -> Int { max(1, Int((width + spacing) / (minWidth + spacing))) }
+
+    private func rows(_ width: CGFloat, _ subviews: Subviews) -> (n: Int, cw: CGFloat, heights: [CGFloat]) {
+        let n = columns(width)
+        let cw = max(0, (width - CGFloat(n - 1) * spacing) / CGFloat(n))
+        var heights: [CGFloat] = []
+        var i = 0
+        while i < subviews.count {
+            let end = min(i + n, subviews.count)
+            heights.append((i..<end).map { subviews[$0].sizeThatFits(ProposedViewSize(width: cw, height: nil)).height }.max() ?? 0)
+            i = end
+        }
+        return (n, cw, heights)
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? (minWidth * 2 + spacing)
+        let r = rows(width, subviews)
+        let h = r.heights.reduce(0, +) + spacing * CGFloat(max(0, r.heights.count - 1))
+        return CGSize(width: width, height: h)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let r = rows(bounds.width, subviews)
+        var y = bounds.minY
+        for (row, h) in r.heights.enumerated() {
+            for col in 0..<r.n {
+                let i = row * r.n + col
+                guard i < subviews.count else { break }
+                let x = bounds.minX + CGFloat(col) * (r.cw + spacing)
+                subviews[i].place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(width: r.cw, height: h))
+            }
+            y += h + spacing
         }
     }
 }

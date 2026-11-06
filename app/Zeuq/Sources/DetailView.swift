@@ -288,7 +288,7 @@ struct ClienteTab: View {
 struct FlowTags: View {
     let items: [String]
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), spacing: 6, alignment: .leading)], alignment: .leading, spacing: 6) {
+        ColumnsLayout(minWidth: 130, spacing: 6) {
             ForEach(items, id: \.self) { Tag(text: $0, color: .green) }
         }
     }
