@@ -43,7 +43,7 @@ struct InboxView: View {
                 }
                 .refreshable { await store.refresh() }
             }
-            .navigationTitle("Zeuq")
+            .navigationTitle("Zeuq's Tools")
             .toolbar {
                 ToolbarItem {
                     Button { Task { await store.refresh() } } label: {

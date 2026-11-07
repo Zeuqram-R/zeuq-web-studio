@@ -8,7 +8,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "2.3"
+    MARKETING_VERSION: "2.4"
     CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Manual
@@ -25,7 +25,7 @@ targets:
     info:
       path: Zeuq/Info-iOS.plist
       properties:
-        CFBundleDisplayName: Zeuq
+        CFBundleDisplayName: "Zeuq's Tools"
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDevelopmentRegion: es
@@ -57,8 +57,8 @@ targets:
     info:
       path: Zeuq/Info-macOS.plist
       properties:
-        CFBundleDisplayName: Zeuq
-        CFBundleName: Zeuq
+        CFBundleDisplayName: "Zeuq's Tools"
+        CFBundleName: "Zeuq's Tools"
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDevelopmentRegion: es

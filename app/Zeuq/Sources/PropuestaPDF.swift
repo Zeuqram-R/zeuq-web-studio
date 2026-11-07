@@ -3,10 +3,10 @@ import SwiftUI
 /// La propuesta como documento con la marca de Zeuq (tamaño carta).
 struct ProposalDocument: View {
     let c: ProposalContent
-    private let blue = Color(red: 0.122, green: 0.310, blue: 0.820)
+    private let blue = Color(red: 0.416, green: 0.239, blue: 0.604) // morado Zeuqram #6A3D9A
     private let ink = Color(red: 0.094, green: 0.129, blue: 0.114)
     private let muted = Color(red: 0.357, green: 0.400, blue: 0.376)
-    private let soft = Color(red: 0.894, green: 0.918, blue: 0.984)
+    private let soft = Color(red: 0.933, green: 0.910, blue: 0.969) // lavanda suave
     private let line = Color(red: 0.851, green: 0.871, blue: 0.847)
 
     var body: some View {
