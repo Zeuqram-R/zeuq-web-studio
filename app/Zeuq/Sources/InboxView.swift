@@ -1,4 +1,9 @@
 import SwiftUI
+#if os(iOS)
+import UIKit
+#else
+import AppKit
+#endif
 
 struct InboxView: View {
     @EnvironmentObject var store: Store
@@ -50,6 +55,9 @@ struct InboxView: View {
                         if store.loading { ProgressView() } else { Label("Actualizar", systemImage: "arrow.clockwise") }
                     }
                     .keyboardShortcut("r")
+                }
+                ToolbarItem {
+                    ShareFormMenu()
                 }
                 ToolbarItem {
                     Button { showResumen = true } label: { Label("Resumen", systemImage: "chart.bar.xaxis") }
@@ -152,5 +160,48 @@ struct Tag: View {
             .padding(.vertical, 3)
             .background(color.opacity(0.15), in: Capsule())
             .foregroundStyle(color)
+    }
+}
+
+
+/// Botón para mandarle el formulario a un cliente nuevo, en español o en inglés.
+struct ShareFormMenu: View {
+    static let base = "https://zeuqram-r.github.io/zeuq-web-studio/"
+
+    static func url(_ lang: String) -> URL { URL(string: base + "?lang=" + lang)! }
+
+    static func mensaje(_ lang: String) -> String {
+        lang == "en"
+            ? "Hi! To prepare a proposal for your website, please fill out this short form (it takes about 5 to 8 minutes). You'll get a confirmation by email and your proposal within 2 business days."
+            : "¡Hola! Para prepararte la propuesta de tu página web, llena este formulario corto (toma unos 5 a 8 minutos). Te llega una confirmación por correo y tu propuesta en máximo 2 días hábiles."
+    }
+
+    var body: some View {
+        Menu {
+            Section("Compartir el formulario") {
+                ShareLink(item: Self.url("es"), message: Text(Self.mensaje("es"))) {
+                    Label("En español", systemImage: "square.and.arrow.up")
+                }
+                ShareLink(item: Self.url("en"), message: Text(Self.mensaje("en"))) {
+                    Label("En inglés", systemImage: "square.and.arrow.up")
+                }
+            }
+            Section("Copiar solo el link") {
+                Button { copiar("es") } label: { Label("Link en español", systemImage: "link") }
+                Button { copiar("en") } label: { Label("Link en inglés", systemImage: "link") }
+            }
+        } label: {
+            Label("Mandar formulario", systemImage: "paperplane")
+        }
+    }
+
+    private func copiar(_ lang: String) {
+        let t = Self.url(lang).absoluteString
+        #if os(iOS)
+        UIPasteboard.general.string = t
+        #else
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(t, forType: .string)
+        #endif
     }
 }
